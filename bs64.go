@@ -1,6 +1,10 @@
 package sm4bs
 
-func sboxInput(bytes []uint64) (g []uint64, m []uint64) {
+var BS64 bs64
+
+type bs64 struct {}
+
+func (bs64) input(bytes []uint64) (g []uint64, m []uint64) {
 	g = make([]uint64, 8)
 	m = make([]uint64, 10)
 
@@ -44,7 +48,7 @@ func sboxInput(bytes []uint64) (g []uint64, m []uint64) {
 	return
 }
 
-func sboxTop(g, m []uint64) (p []uint64) {
+func (bs64) top(g, m []uint64) (p []uint64) {
 	p = make([]uint64, 4)
 
 	t1 := ^(g[5] & g[1])
@@ -80,7 +84,7 @@ func sboxTop(g, m []uint64) (p []uint64) {
 	return
 }
 
-func sboxMiddle(p []uint64) (l []uint64) {
+func (bs64) middle(p []uint64) (l []uint64) {
 	l = make([]uint64, 4)
 
 	t1 := ^(p[3] & p[0])
@@ -107,7 +111,7 @@ func sboxMiddle(p []uint64) (l []uint64) {
 	return
 }
 
-func sboxBottom(g, m, l []uint64) (e []uint64) {
+func (bs64) bottom(g, m, l []uint64) (e []uint64) {
 	e = make([]uint64, 18)
 
 	k4 := l[3] ^ l[2]
@@ -142,7 +146,7 @@ func sboxBottom(g, m, l []uint64) (e []uint64) {
 	return
 }
 
-func sboxOutput(e []uint64) []uint64 {
+func (bs64) output(e []uint64) []uint64 {
 	r0 := e[0] ^ e[1]
 	r1 := e[2] ^ e[1]
 	r2 := e[3] ^ e[4]
@@ -181,64 +185,61 @@ func sboxOutput(e []uint64) []uint64 {
 	return []uint64{t15, t13, t8, t14, t11, t9, t12, t16}
 }
 
-func sboxBitsliced(bytes []uint64) []uint64 {
-	g, m := sboxInput(bytes)
-	return sboxOutput(sboxBottom(g, m, sboxMiddle(sboxTop(g, m))))
+func (bs bs64) sbox(bytes []uint64) []uint64 {
+	g, m := bs.input(bytes)
+	return bs.output(bs.bottom(g, m, bs.middle(bs.top(g, m))))
 }
 
-func bsTranspose(in []byte, out []uint64) {
+func (bs64) transpose(in []byte, out []uint64) {
 	for i := 0; i < BlockSize; i++ {
 		for j := 0; j < WordSize; j++ {
-			k := (j*BlockSize + i) / 8 // byte order
-			b := i % 8
-			out[i] |= uint64((in[k]>>(7-b))&1) << j
+			k := j<<4 + i>>3   // byte position
+			b := 7 ^ byte(i&7) // bit position in byte
+			out[i] |= uint64((in[k]>>(b))&1) << j
 		}
 	}
 }
 
-func bsTransposeRev(state []uint64, dst []byte) {
+func (bs64) transposeRev(state []uint64, dst []byte) {
 	for i := 0; i < BlockSize; i++ {
 		for j := 0; j < WordSize; j++ {
-			k := (j*BlockSize + i) / 8 // byte order
-			b := i % 8
-			dst[k] |= byte((state[i]>>j)&1) << (7 - b)
+			k := j<<4 + i>>3   // byte position
+			b := 7 ^ byte(i&7) // bit position in byte
+			dst[k] |= byte((state[i]>>j)&1) << b
 		}
 	}
 }
 
-func bsRoundKey(in uint32, out []uint64) {
-	for i := 0; i < 32; i++ {
-		if (in>>(31-i))&1 == 1 {
-			out[i] = 0xffffffffffffffff
-		} else {
-			out[i] = 0
-		}
+func (bs64) roundKey(in uint32, out []uint64) {
+	for i := 31; i >= 0; i-- {
+		out[i] = -uint64(in & 1)
+		in >>= 1
 	}
 }
 
-func xorRK(rk, x1, x2, x3 []uint64) []uint64 {
+func (bs64) xorRK(rk, x1, x2, x3 []uint64) []uint64 {
 	for i := 0; i < 32; i++ {
 		rk[i] ^= x1[i] ^ x2[i] ^ x3[i]
 	}
 	return rk
 }
 
-func xor(x1, x2 []uint64) []uint64 {
+func (bs64) xor(x1, x2 []uint64) []uint64 {
 	for i := 0; i < 32; i++ {
 		x1[i] ^= x2[i]
 	}
 	return x1
 }
 
-func tao(x []uint64) []uint64 {
+func (bs bs64) tao(x []uint64) []uint64 {
 	for i := 0; i < 4; i++ {
-		ret := sboxBitsliced(x[i*8 : (i+1)*8])
+		ret := bs.sbox(x[i*8 : (i+1)*8])
 		copy(x[i*8:(i+1)*8], ret)
 	}
 	return x
 }
 
-func rotateLeft32(x []uint64, k int) []uint64 {
+func (bs bs64) rotateLeft32(x []uint64, k int) []uint64 {
 	ret := make([]uint64, 32)
 	copy(ret[:], x[k:])
 	copy(ret[32-k:], x[:k])
@@ -246,13 +247,45 @@ func rotateLeft32(x []uint64, k int) []uint64 {
 	return ret
 }
 
-func L(x []uint64) []uint64 {
-	ret1 := rotateLeft32(x, 2)
-	ret2 := rotateLeft32(x, 10)
-	ret1 = xor(ret1, ret2)
-	ret2 = rotateLeft32(x, 18)
-	ret1 = xor(ret1, ret2)
-	ret2 = rotateLeft32(x, 24)
-	ret1 = xor(ret1, ret2)
-	return xor(x, ret1)
+func (bs bs64) l(x []uint64) []uint64 {
+	ret1 := bs.rotateLeft32(x, 2)
+	ret2 := bs.rotateLeft32(x, 10)
+	ret1 = bs.xor(ret1, ret2)
+	ret2 = bs.rotateLeft32(x, 18)
+	ret1 = bs.xor(ret1, ret2)
+	ret2 = bs.rotateLeft32(x, 24)
+	ret1 = bs.xor(ret1, ret2)
+	return bs.xor(x, ret1)
+}
+
+func (bs bs64) EncryptBlocks(xk []uint32, dst, src []byte) {
+	_ = src[BSBlockSize-1] // early bounds check
+	_ = dst[BSBlockSize-1] // early bounds check
+
+	state := make([]uint64, BlockSize)
+	bs.transpose(src, state)
+	b0 := state[:32]
+	b1 := state[32:64]
+	b2 := state[64:96]
+	b3 := state[96:]
+
+	rk := make([]uint64, 32)
+
+	for i := 0; i < 8; i++ {
+		bs.roundKey(xk[i*4], rk)
+		b0 = bs.xor(b0, bs.l(bs.tao(bs.xorRK(rk, b1, b2, b3))))
+		bs.roundKey(xk[i*4+1], rk)
+		b1 = bs.xor(b1, bs.l(bs.tao(bs.xorRK(rk, b2, b3, b0))))
+		bs.roundKey(xk[i*4+2], rk)
+		b2 = bs.xor(b2, bs.l(bs.tao(bs.xorRK(rk, b3, b0, b1))))
+		bs.roundKey(xk[i*4+3], rk)
+		b3 = bs.xor(b3, bs.l(bs.tao(bs.xorRK(rk, b0, b1, b2))))
+	}
+	copy(rk, b0)
+	copy(state[:], b3)
+	copy(state[96:], rk)
+	copy(rk, b1)
+	copy(state[32:], b2)
+	copy(state[64:], rk)
+	bs.transposeRev(state, dst)
 }

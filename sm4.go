@@ -5,38 +5,6 @@ import (
 	"math/bits"
 )
 
-func encrypt64Blocks(xk []uint32, dst, src []byte) {
-	_ = src[BSBlockSize-1] // early bounds check
-	_ = dst[BSBlockSize-1] // early bounds check
-
-	state := make([]uint64, BlockSize)
-	bsTranspose(src, state)
-	b0 := state[:32]
-	b1 := state[32:64]
-	b2 := state[64:96]
-	b3 := state[96:]
-
-	rk := make([]uint64, 32)
-
-	for i := 0; i < 8; i++ {
-		bsRoundKey(xk[i*4], rk)
-		b0 = xor(b0, L(tao(xorRK(rk, b1, b2, b3))))
-		bsRoundKey(xk[i*4+1], rk)
-		b1 = xor(b1, L(tao(xorRK(rk, b2, b3, b0))))
-		bsRoundKey(xk[i*4+2], rk)
-		b2 = xor(b2, L(tao(xorRK(rk, b3, b0, b1))))
-		bsRoundKey(xk[i*4+3], rk)
-		b3 = xor(b3, L(tao(xorRK(rk, b0, b1, b2))))
-	}
-	copy(rk, b0)
-	copy(state[:], b3)
-	copy(state[96:], rk)
-	copy(rk, b1)
-	copy(state[32:], b2)
-	copy(state[64:], rk)
-	bsTransposeRev(state, dst)
-}
-
 // Key expansion algorithm.
 func expandKey(key []byte, enc, dec []uint32) {
 	// Encryption key setup.
