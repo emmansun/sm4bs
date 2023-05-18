@@ -2,8 +2,6 @@
 
 package sm4bs
 
-import "encoding/binary"
-
 var BS128 bs128
 
 type bs128 struct{}
@@ -14,32 +12,42 @@ func (bs128) bytes() int {
 
 func (bs bs128) xor(x, y []byte) []byte {
 	ret := make([]byte, bs.bytes())
-	for i := 0; i < bs.bytes(); i++ {
-		ret[i] = x[i] ^ y[i]
-	}
+	xor128(&x[0], &y[0], &ret[0])
+	return ret
+}
+
+func (bs bs128) nxor(x, y []byte) []byte {
+	ret := make([]byte, bs.bytes())
+	nxor128(&x[0], &y[0], &ret[0])
 	return ret
 }
 
 func (bs bs128) and(x, y []byte) []byte {
 	ret := make([]byte, bs.bytes())
-	for i := 0; i < bs.bytes(); i++ {
-		ret[i] = x[i] & y[i]
-	}
+	and128(&x[0], &y[0], &ret[0])
+	return ret
+}
+
+func (bs bs128) nand(x, y []byte) []byte {
+	ret := make([]byte, bs.bytes())
+	nand128(&x[0], &y[0], &ret[0])
 	return ret
 }
 
 func (bs bs128) or(x, y []byte) []byte {
 	ret := make([]byte, bs.bytes())
-	for i := 0; i < bs.bytes(); i++ {
-		ret[i] = x[i] | y[i]
-	}
+	or128(&x[0], &y[0], &ret[0])
+	return ret
+}
+
+func (bs bs128) nor(x, y []byte) []byte {
+	ret := make([]byte, bs.bytes())
+	nor128(&x[0], &y[0], &ret[0])
 	return ret
 }
 
 func (bs bs128) not(x []byte) []byte {
-	for i := 0; i < bs.bytes(); i++ {
-		x[i] = ^x[i]
-	}
+	not128(&x[0])
 	return x
 }
 
@@ -59,44 +67,28 @@ func (bs bs128) input(bytes []byte) (g []byte, m []byte) {
 	b6 := bytes[6*size : 7*size]
 	b7 := bytes[7*size:]
 
-	t1 := bs.xor(b7, b5)
-	t2 := bs.not(bs.xor(b5, b1))
-	t3 := bs.not(bs.xor(b0, t2))
-	t4 := bs.xor(b6, b2)
-	t5 := bs.xor(b3, t3)
-	t6 := bs.xor(b4, t1)
-	t7 := bs.xor(b1, t5)
-	t8 := bs.xor(b1, t4)
-	t9 := bs.xor(t6, t8)
-	t10 := bs.xor(t6, t7)
-	t11 := bs.not(bs.xor(b3, t1))
-	t12 := bs.not(bs.xor(b6, t9))
-	t13 := bs.xor(t4, t10)
-	t14 := bs.xor(t2, t11)
-	t15 := bs.xor(t12, t14)
-	t16 := bs.xor(t3, t12)
-	t17 := bs.xor(t11, t16)
+	xor128(&b7[0], &b5[0], &m[6*size])         // set m6 = t1 first
+	nxor128(&b5[0], &b1[0], &g[4*size])        // g4 = t2
+	nxor128(&b0[0], &g[4*size], &m[size])      // m1 = t3
+	xor128(&b6[0], &b2[0], &m[4*size])         // m4 = t4
+	xor128(&b3[0], &m[size], &g[3*size])       // g3 = t5
+	xor128(&b4[0], &m[6*size], &m[0])          // m0 = t6
+	xor128(&b1[0], &g[3*size], &g[size])       // g1 = t7
+	xor128(&b1[0], &m[4*size], &m[2*size])     // m2 = t8
+	xor128(&m[0], &m[2*size], &m[8*size])      // m8 = t9
+	xor128(&m[0], &g[size], &g[0])             // g0 = t10
+	nxor128(&b3[0], &m[6*size], &m[5*size])    // m5 = t11
+	nxor128(&b6[0], &m[8*size], &m[9*size])    // m9 = t12
+	xor128(&m[4*size], &g[0], &g[2*size])      // g2 = t13
+	xor128(&g[4*size], &m[5*size], &g[6*size]) // g6 = t14
+	xor128(&m[9*size], &g[6*size], &g[7*size]) // g7 = t15
+	xor128(&m[size], &m[9*size], &m[3*size])   // m3 = t16
+	xor128(&m[5*size], &m[3*size], &m[7*size]) // m7 = t17
 
-	copy(g, t10)
-	copy(g[size:], t7)
-	copy(g[2*size:], t13)
-	copy(g[3*size:], t5)
-	copy(g[4*size:], t2)
 	copy(g[5*size:], b0)
 	bs.not(g[5*size:])
-	copy(g[6*size:], t14)
-	copy(g[7*size:], t15)
 
-	copy(m, t6)
-	copy(m[size:], t3)
-	copy(m[2*size:], t8)
-	copy(m[3*size:], t16)
-	copy(m[4*size:], t4)
-	copy(m[5*size:], t11)
 	copy(m[6*size:], b1)
-	copy(m[7*size:], t17)
-	copy(m[8*size:], t9)
-	copy(m[9*size:], t12)
 
 	return
 }
@@ -105,35 +97,34 @@ func (bs bs128) top(g, m []byte) (p []byte) {
 	size := bs.bytes()
 	p = make([]byte, 4*size)
 
-	t1 := bs.not(bs.and(g[5*size:], g[size:]))
-	t2 := bs.not(bs.and(m[1*size:], m))
-	t3 := bs.not(bs.and(g[4*size:], g))
-	t4 := bs.not(bs.and(g[7*size:], g[3*size:]))
+	t13 := bs.nand(g[5*size:], g[size:])
+	t15 := bs.nand(m[1*size:], m)
+	t14 := bs.nand(g[4*size:], g)
+	nand128(&g[7*size], &g[3*size], &p[0])    // p0
+	nand128(&m[9*size], &m[8*size], &p[size]) // p1
+	t6 := bs.nor(g[6*size:], g[2*size:])
+	t8 := bs.nor(m[9*size:], m[8*size:])
 
-	t5 := bs.not(bs.and(m[9*size:], m[8*size:]))
-	t6 := bs.not(bs.or(g[6*size:], g[2*size:]))
-	t7 := bs.not(bs.or(g[7*size:], g[3*size:]))
-	t8 := bs.not(bs.or(m[9*size:], m[8*size:]))
+	xor128(&t13[0], &t15[0], &t13[0])
+	xor128(&t14[0], &t15[0], &t14[0])
+	xor128(&p[0], &t13[0], &t15[0])      // use p0
+	t16 := bs.xor(p[1*size:2*size], t14) // use p1
 
-	t9 := bs.not(bs.or(m[7*size:], m[6*size:]))
-	t10 := bs.not(bs.and(m[3*size:], m[2*size:]))
-	t11 := bs.not(bs.and(m[5*size:], m[4*size:]))
-	t12 := bs.not(bs.or(m[3*size:], m[2*size:]))
+	nor128(&m[7*size], &m[6*size], &p[2*size])  // p2
+	nand128(&m[3*size], &m[2*size], &p[3*size]) // p3
+	xor128(&p[2*size], &p[3*size], &p[3*size])  // use p3
+	nor128(&g[7*size], &g[3*size], &p[2*size])
+	xor128(&p[2*size], &t16[0], &p[1*size])
 
-	t13 := bs.xor(t1, t2)
-	t14 := bs.xor(t3, t2)
-	t15 := bs.xor(t4, t13)
-	t16 := bs.xor(t5, t14)
+	nand128(&m[5*size], &m[4*size], &p[2*size])
+	nor128(&m[3*size], &m[2*size], &p[0])
+	xor128(&p[2*size], &p[0], &p[2*size])
+	xor128(&t6[0], &t15[0], &p[0])
 
-	t17 := bs.xor(t9, t10)
-	t18 := bs.xor(t11, t12)
-	t19 := bs.xor(t6, t15)
-	t20 := bs.xor(t7, t16)
-
-	copy(p[3*size:], bs.xor(t19, t17))
-	copy(p[2*size:], bs.xor(t20, t18))
-	copy(p[1*size:], bs.xor(t8, t15))
-	copy(p[0*size:], bs.xor(t6, t16))
+	xor128(&p[0], &p[3*size], &p[3*size])
+	xor128(&p[1*size], &p[2*size], &p[2*size])
+	xor128(&t8[0], &t15[0], &p[1*size])
+	xor128(&t6[0], &t16[0], &p[0])
 
 	return
 }
@@ -142,29 +133,24 @@ func (bs bs128) middle(p []byte) (l []byte) {
 	size := bs.bytes()
 	l = make([]byte, 4*size)
 
-	t1 := bs.not(bs.and(p[3*size:], p))
-	t2 := bs.not(bs.or(t1, p[2*size:]))
-	t3 := bs.not(bs.and(p[2*size:], p))
+	t1 := bs.nand(p[3*size:], p)
+	t2 := bs.nor(t1, p[2*size:])
+	t3 := bs.nand(p[2*size:], p)
 	t4 := bs.xor(p[1*size:], t3)
 
-	t5 := bs.not(bs.or(p[2*size:], t4))
-	t6 := bs.not(bs.and(p[1*size:], t4))
-	t7 := bs.not(bs.or(p[3*size:], t4))
-	t8 := bs.not(bs.or(t7, t2))
+	t5 := bs.nor(p[2*size:], t4)
+	t6 := bs.nand(p[1*size:], t4)
+	t7 := bs.nor(p[3*size:], t4)
+	t8 := bs.nor(t7, t2)
 
-	t9 := bs.not(bs.xor(t5, t7))
-	t10 := bs.not(bs.xor(t9, p[3*size:]))
-	t11 := bs.not(bs.and(t6, t8))
-	t12 := bs.not(bs.and(t8, p[1*size:]))
+	t9 := bs.nxor(t5, t7)
+	nxor128(&t9[0], &p[3*size], &l[0])
+	nand128(&t6[0], &t8[0], &l[2*size])
+	nand128(&t8[0], &p[1*size], &l[3*size])
 
-	t13 := bs.not(bs.xor(t12, p[0*size:]))
-	t14 := bs.not(bs.and(t1, p[2*size:]))
-	t15 := bs.not(bs.and(t9, t14))
-
-	copy(l, t10)
-	copy(l[1*size:], t15)
-	copy(l[2*size:], t11)
-	copy(l[3*size:], t13)
+	nxor128(&l[3*size], &p[0], &l[3*size])
+	nand128(&t1[0], &p[2*size], &l[1*size])
+	nand128(&t9[0], &l[1*size], &l[1*size])
 
 	return
 }
@@ -179,35 +165,34 @@ func (bs bs128) bottom(g, m, l []byte) (e []byte) {
 	k1 := bs.xor(k3, k2)
 	k0 := bs.xor(l[1*size:], l[0*size:])
 
-	copy(e[0*size:], bs.not(bs.and(m[1*size:], k0)))
-	copy(e[1*size:], bs.not(bs.and(g[5*size:], l[1*size:])))
-	copy(e[2*size:], bs.not(bs.and(g[4*size:], l[0*size:])))
-	copy(e[3*size:], bs.not(bs.and(m[7*size:], k3)))
+	nand128(&m[1*size], &k0[0], &e[0])
+	nand128(&g[5*size], &l[size], &e[size])
+	nand128(&g[4*size], &l[0], &e[2*size])
+	nand128(&m[7*size], &k3[0], &e[3*size])
 
-	copy(e[4*size:], bs.not(bs.and(m[5*size:], k2)))
-	copy(e[5*size:], bs.not(bs.and(m[3*size:], k1)))
-	copy(e[6*size:], bs.not(bs.and(m[9*size:], k4)))
-	copy(e[7*size:], bs.not(bs.and(g[7*size:], l[3*size:])))
+	nand128(&m[5*size], &k2[0], &e[4*size])
+	nand128(&m[3*size], &k1[0], &e[5*size])
+	nand128(&m[9*size], &k4[0], &e[6*size])
+	nand128(&g[7*size], &l[3*size], &e[7*size])
 
-	copy(e[8*size:], bs.not(bs.and(g[6*size:], l[2*size:])))
-	copy(e[9*size:], bs.not(bs.and(m[0*size:], k0)))
-	copy(e[10*size:], bs.not(bs.and(g[1*size:], l[1*size:])))
-	copy(e[11*size:], bs.not(bs.and(g[0*size:], l[0*size:])))
+	nand128(&g[6*size], &l[2*size], &e[8*size])
+	nand128(&m[0], &k0[0], &e[9*size])
+	nand128(&g[1*size], &l[1*size], &e[10*size])
+	nand128(&g[0], &l[0], &e[11*size])
 
-	copy(e[12*size:], bs.not(bs.and(m[6*size:], k3)))
-	copy(e[13*size:], bs.not(bs.and(m[4*size:], k2)))
-	copy(e[14*size:], bs.not(bs.and(m[2*size:], k1)))
-	copy(e[15*size:], bs.not(bs.and(m[8*size:], k4)))
+	nand128(&m[6*size], &k3[0], &e[12*size])
+	nand128(&m[4*size], &k2[0], &e[13*size])
+	nand128(&m[2*size], &k1[0], &e[14*size])
+	nand128(&m[8*size], &k4[0], &e[15*size])
 
-	copy(e[16*size:], bs.not(bs.and(g[3*size:], l[3*size:])))
-	copy(e[17*size:], bs.not(bs.and(g[2*size:], l[2*size:])))
+	nand128(&g[3*size], &l[3*size], &e[16*size])
+	nand128(&g[2*size], &l[2*size], &e[17*size])
 
 	return
 }
 
-func (bs bs128) output(e []byte) (ret []byte) {
+func (bs bs128) output(e, ret []byte) {
 	size := bs.bytes()
-	ret = make([]byte, 8*size)
 
 	r0 := bs.xor(e[0*size:], e[1*size:])
 	r1 := bs.xor(e[2*size:], e[1*size:])
@@ -229,78 +214,49 @@ func (bs bs128) output(e []byte) (ret []byte) {
 	t3 := bs.xor(r3, t2)
 	t4 := bs.xor(r5, r3)
 
-	t5 := bs.xor(r4, t4)
+	xor128(&r4[0], &t4[0], &ret[6*size]) // t5, use ret6 first
 	t6 := bs.xor(r4, r0)
-	t7 := bs.xor(r11, r7)
-	t8 := bs.xor(t1, t4)
+	xor128(&r11[0], &r7[0], &ret[4*size]) // t7, use ret4 first
+	xor128(&t1[0], &t4[0], &ret[5*size])  // t8
 
-	t9 := bs.xor(t1, t6)
-	t10 := bs.xor(r2, t5)
-	t11 := bs.xor(r10, r8)
-	t12 := bs.not(bs.xor(t3, t11))
+	xor128(&t1[0], &t6[0], &ret[2*size])        // t9
+	xor128(&r2[0], &ret[6*size], &ret[6*size])  // t0, use ret6 first
+	xor128(&r10[0], &r8[0], &ret[3*size])       // t11
+	nxor128(&t3[0], &ret[3*size], &ret[1*size]) // t12
 
-	t13 := bs.xor(t10, t12)
-	t14 := bs.not(bs.xor(t3, t7))
-	t15 := bs.not(bs.xor(r10, r6))
-	t16 := bs.xor(t6, t14)
-
-	copy(ret[7*size:], t15)
-	copy(ret[6*size:], t13)
-	copy(ret[5*size:], t8)
-	copy(ret[4*size:], t14)
-	copy(ret[3*size:], t11)
-	copy(ret[2*size:], t9)
-	copy(ret[1*size:], t12)
-	copy(ret[0*size:], t16)
-
-	return
+	xor128(&ret[6*size], &ret[1*size], &ret[6*size]) // t13
+	nxor128(&t3[0], &ret[4*size], &ret[4*size])      // t14
+	nxor128(&r10[0], &r6[0], &ret[7*size])           // t15
+	xor128(&t6[0], &ret[4*size], &ret[0])            // t16
 }
 
-func (bs bs128) sbox(bytes []byte) []byte {
+func (bs bs128) sbox(bytes []byte) {
 	g, m := bs.input(bytes)
-	return bs.output(bs.bottom(g, m, bs.middle(bs.top(g, m))))
+	bs.output(bs.bottom(g, m, bs.middle(bs.top(g, m))), bytes)
 }
 
 func (bs bs128) tao(x []byte) []byte {
 	size := 8 * bs.bytes()
 	for i := 0; i < 4; i++ {
-		ret := bs.sbox(x[i*size : (i+1)*size])
-		copy(x[i*size:(i+1)*size], ret)
+		bs.sbox(x[i*size : (i+1)*size])
 	}
 	return x
 }
 
 func (bs bs128) xor32(x1, x2 []byte) []byte {
-	size := bs.bytes()
-	for i := 0; i < 32*size; i++ {
-		x1[i] ^= x2[i]
-	}
+	xor32x128(&x1[0], &x2[0], &x1[0])
 	return x1
 }
 
 func (bs bs128) xorRK(rk, x1, x2, x3 []byte) []byte {
-	size := bs.bytes()
-	for i := 0; i < 32*size; i++ {
-		rk[i] ^= x1[i] ^ x2[i] ^ x3[i]
-	}
+	xor32x128(&rk[0], &x1[0], &rk[0])
+	xor32x128(&rk[0], &x2[0], &rk[0])
+	xor32x128(&rk[0], &x3[0], &rk[0])
 	return rk
 }
 
 func (bs bs128) roundKey(in uint32, out []byte) {
-	var bytes [4]byte
-	size := bs.bytes()
-	binary.BigEndian.PutUint32(bytes[:], in)
-	ret := out
-	for i := 0; i < 4; i++ {
-		b := bytes[i]
-		for j := 0; j < 8; j++ {
-			for k := 0; k < size; k++ {
-				ret[k] = -uint8(b & 1)
-			}
-			b = b >> 1
-			ret = ret[size:]
-		}
-	}
+	expandRoundKey128(in, &out[0])
 }
 
 // 24 25 26 27 28 29 30 31 | 16 17 18 19 20 21 22 23 |  8  9 10 11 12 13 14 15 |  0  1  2  3  4  5  6  7

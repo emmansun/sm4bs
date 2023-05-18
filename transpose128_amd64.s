@@ -525,3 +525,191 @@ col_loop:
 	CMPQ SI, $0x80
 	JL   row_loop
 	RET
+
+// func xor128(x *byte, y *byte, out *byte)
+// Requires: SSE2
+TEXT ·xor128(SB), NOSPLIT, $0-24
+	MOVQ  x+0(FP), AX
+	MOVQ  y+8(FP), CX
+	MOVQ  out+16(FP), DX
+	MOVOU (AX), X0
+	MOVOU (CX), X1
+	PXOR  X0, X1
+	MOVOU X1, (DX)
+	RET
+
+// func nxor128(x *byte, y *byte, out *byte)
+// Requires: SSE2
+TEXT ·nxor128(SB), NOSPLIT, $0-24
+	MOVQ    x+0(FP), AX
+	MOVQ    y+8(FP), CX
+	MOVQ    out+16(FP), DX
+	MOVOU   (AX), X0
+	MOVOU   (CX), X1
+	PXOR    X0, X1
+	PCMPEQB X0, X0
+	PANDN   X0, X1
+	MOVOU   X1, (DX)
+	RET
+
+// func or128(x *byte, y *byte, out *byte)
+// Requires: SSE2
+TEXT ·or128(SB), NOSPLIT, $0-24
+	MOVQ  x+0(FP), AX
+	MOVQ  y+8(FP), CX
+	MOVQ  out+16(FP), DX
+	MOVOU (AX), X0
+	MOVOU (CX), X1
+	POR   X0, X1
+	MOVOU X1, (DX)
+	RET
+
+// func nor128(x *byte, y *byte, out *byte)
+// Requires: SSE2
+TEXT ·nor128(SB), NOSPLIT, $0-24
+	MOVQ    x+0(FP), AX
+	MOVQ    y+8(FP), CX
+	MOVQ    out+16(FP), DX
+	MOVOU   (AX), X0
+	MOVOU   (CX), X1
+	POR     X0, X1
+	PCMPEQB X0, X0
+	PANDN   X0, X1
+	MOVOU   X1, (DX)
+	RET
+
+// func and128(x *byte, y *byte, out *byte)
+// Requires: SSE2
+TEXT ·and128(SB), NOSPLIT, $0-24
+	MOVQ  x+0(FP), AX
+	MOVQ  y+8(FP), CX
+	MOVQ  out+16(FP), DX
+	MOVOU (AX), X0
+	MOVOU (CX), X1
+	PAND  X0, X1
+	MOVOU X1, (DX)
+	RET
+
+// func nand128(x *byte, y *byte, out *byte)
+// Requires: SSE2
+TEXT ·nand128(SB), NOSPLIT, $0-24
+	MOVQ    x+0(FP), AX
+	MOVQ    y+8(FP), CX
+	MOVQ    out+16(FP), DX
+	MOVOU   (AX), X0
+	MOVOU   (CX), X1
+	PAND    X0, X1
+	PCMPEQB X0, X0
+	PANDN   X0, X1
+	MOVOU   X1, (DX)
+	RET
+
+// func not128(x *byte)
+// Requires: SSE2
+TEXT ·not128(SB), NOSPLIT, $0-8
+	MOVQ    x+0(FP), AX
+	MOVOU   (AX), X0
+	PCMPEQB X1, X1
+	PANDN   X1, X0
+	MOVOU   X0, (AX)
+	RET
+
+// func xor32x128(x *byte, y *byte, out *byte)
+// Requires: SSE2
+TEXT ·xor32x128(SB), NOSPLIT, $0-24
+	MOVQ x+0(FP), AX
+	MOVQ y+8(FP), CX
+	MOVQ out+16(FP), DX
+	XORQ BX, BX
+
+xor32_loop:
+	MOVOU (AX)(BX*1), X0
+	MOVOU (CX)(BX*1), X1
+	PXOR  X0, X1
+	MOVOU X1, (DX)(BX*1)
+	ADDQ  $0x10, BX
+	CMPQ  BX, $0x00000200
+	JL    xor32_loop
+	RET
+
+// func expandRoundKey128(x uint32, out *byte)
+// Requires: SSE2
+TEXT ·expandRoundKey128(SB), NOSPLIT, $0-16
+	MOVL    x+0(FP), AX
+	MOVQ    out+8(FP), CX
+	PXOR    X0, X0
+	PCMPEQB X1, X1
+	XORQ    BX, BX
+
+	// Handle first byte
+	MOVL $0x01000000, DX
+
+rk_loop_1:
+	TESTL AX, DX
+	JNZ   rk_loop_1_1
+	MOVOU X0, (CX)(BX*1)
+	JMP   rk_loop_1_c
+
+rk_loop_1_1:
+	MOVOU X1, (CX)(BX*1)
+
+rk_loop_1_c:
+	ROLL $0x01, DX
+	ADDQ $0x10, BX
+	CMPQ BX, $0x00000080
+	JL   rk_loop_1
+
+	// Handle second byte
+	MOVL $0x00010000, DX
+
+rk_loop_2:
+	TESTL AX, DX
+	JNZ   rk_loop_2_1
+	MOVOU X0, (CX)(BX*1)
+	JMP   rk_loop_2_c
+
+rk_loop_2_1:
+	MOVOU X1, (CX)(BX*1)
+
+rk_loop_2_c:
+	ROLL $0x01, DX
+	ADDQ $0x10, BX
+	CMPQ BX, $0x00000100
+	JL   rk_loop_2
+
+	// Handle third byte
+	MOVL $0x00000100, DX
+
+rk_loop_3:
+	TESTL AX, DX
+	JNZ   rk_loop_3_1
+	MOVOU X0, (CX)(BX*1)
+	JMP   rk_loop_3_c
+
+rk_loop_3_1:
+	MOVOU X1, (CX)(BX*1)
+
+rk_loop_3_c:
+	ROLL $0x01, DX
+	ADDQ $0x10, BX
+	CMPQ BX, $0x00000180
+	JL   rk_loop_3
+
+	// Handle last byte
+	MOVL $0x00000001, DX
+
+rk_loop_4:
+	TESTL AX, DX
+	JNZ   rk_loop_4_1
+	MOVOU X0, (CX)(BX*1)
+	JMP   rk_loop_4_c
+
+rk_loop_4_1:
+	MOVOU X1, (CX)(BX*1)
+
+rk_loop_4_c:
+	ROLL $0x01, DX
+	ADDQ $0x10, BX
+	CMPQ BX, $0x00000200
+	JL   rk_loop_4
+	RET

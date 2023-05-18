@@ -12,3 +12,30 @@ func transpose64Rev(in *byte, out *byte)
 
 // Bit level matrix transpose, 128x128
 func transpose128(in *byte, out *byte)
+
+// out = x xor y
+func xor128(x *byte, y *byte, out *byte)
+
+// out = not(x xor y)
+func nxor128(x *byte, y *byte, out *byte)
+
+// out = x or y
+func or128(x *byte, y *byte, out *byte)
+
+// out = not(x or y)
+func nor128(x *byte, y *byte, out *byte)
+
+// out = x and y
+func and128(x *byte, y *byte, out *byte)
+
+// out = not(x and y)
+func nand128(x *byte, y *byte, out *byte)
+
+// not(x)
+func not128(x *byte)
+
+// out = x xor y
+func xor32x128(x *byte, y *byte, out *byte)
+
+// 16 bytes per bit
+func expandRoundKey128(x uint32, out *byte)

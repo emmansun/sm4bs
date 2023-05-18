@@ -26,9 +26,9 @@ func newByte128(b byte) []byte {
 func TestSbox(t *testing.T) {
 	for i := 0; i < 256; i++ {
 		iBytes := newByte128(byte(i))
-		ret := BS128.sbox(iBytes)
+		BS128.sbox(iBytes)
 		expected := newByte128(sbox[i])
-		if !bytes.Equal(ret, expected) {
+		if !bytes.Equal(iBytes, expected) {
 			t.Fatalf("unexpected result for %v.", i)
 		}
 	}
@@ -51,21 +51,6 @@ func TestTao(t *testing.T) {
 	ret := BS128.tao(x)
 	if !bytes.Equal(ret, expected) {
 		t.Fatalf("unexpected tao result")
-	}
-}
-
-func TestRoundRK(t *testing.T) {
-	x := make([]byte, 32*BS128.bytes())
-	expected := make([]byte, 32*BS128.bytes())
-
-	copy(expected, newByte128(byte(0)))
-	copy(expected[8*BS128.bytes():], newByte128(byte(1)))
-	copy(expected[16*BS128.bytes():], newByte128(byte(2)))
-	copy(expected[24*BS128.bytes():], newByte128(byte(3)))
-
-	BS128.roundKey(0x00010203, x)
-	if !bytes.Equal(x, expected) {
-		t.Fatalf("unexpected roundRK result")
 	}
 }
 

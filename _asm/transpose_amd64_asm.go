@@ -203,11 +203,260 @@ func transpose128() {
 	RET()
 }
 
+func xor128() {
+	// xor128 function
+	TEXT("xor128", NOSPLIT, "func(x, y, out *byte)")
+	Doc("out = x xor y")
+	x := Mem{Base: Load(Param("x"), GP64())}
+	y := Mem{Base: Load(Param("y"), GP64())}
+	out := Mem{Base: Load(Param("out"), GP64())}
+
+	X := XMM()
+	Y := XMM()
+
+	MOVOU(x, X)
+	MOVOU(y, Y)
+	PXOR(X, Y)
+	MOVOU(Y, out)
+
+	RET()
+}
+
+func nxor128() {
+	// nxor128 function
+	TEXT("nxor128", NOSPLIT, "func(x, y, out *byte)")
+	Doc("out = not(x xor y)")
+	x := Mem{Base: Load(Param("x"), GP64())}
+	y := Mem{Base: Load(Param("y"), GP64())}
+	out := Mem{Base: Load(Param("out"), GP64())}
+
+	X := XMM()
+	Y := XMM()
+
+	MOVOU(x, X)
+	MOVOU(y, Y)
+	PXOR(X, Y)
+	PCMPEQB(X, X)
+	PANDN(X, Y)
+	MOVOU(Y, out)
+
+	RET()
+}
+
+func or128() {
+	// or128 function
+	TEXT("or128", NOSPLIT, "func(x, y, out *byte)")
+	Doc("out = x or y")
+	x := Mem{Base: Load(Param("x"), GP64())}
+	y := Mem{Base: Load(Param("y"), GP64())}
+	out := Mem{Base: Load(Param("out"), GP64())}
+
+	X := XMM()
+	Y := XMM()
+
+	MOVOU(x, X)
+	MOVOU(y, Y)
+	POR(X, Y)
+	MOVOU(Y, out)
+
+	RET()
+}
+
+func nor128() {
+	// nor128 function
+	TEXT("nor128", NOSPLIT, "func(x, y, out *byte)")
+	Doc("out = not(x or y)")
+	x := Mem{Base: Load(Param("x"), GP64())}
+	y := Mem{Base: Load(Param("y"), GP64())}
+	out := Mem{Base: Load(Param("out"), GP64())}
+
+	X := XMM()
+	Y := XMM()
+
+	MOVOU(x, X)
+	MOVOU(y, Y)
+	POR(X, Y)
+	PCMPEQB(X, X)
+	PANDN(X, Y)
+	MOVOU(Y, out)
+
+	RET()
+}
+
+func and128() {
+	// and128 function
+	TEXT("and128", NOSPLIT, "func(x, y, out *byte)")
+	Doc("out = x and y")
+	x := Mem{Base: Load(Param("x"), GP64())}
+	y := Mem{Base: Load(Param("y"), GP64())}
+	out := Mem{Base: Load(Param("out"), GP64())}
+
+	X := XMM()
+	Y := XMM()
+
+	MOVOU(x, X)
+	MOVOU(y, Y)
+	PAND(X, Y)
+	MOVOU(Y, out)
+
+	RET()
+}
+
+func nand128() {
+	// nand128 function
+	TEXT("nand128", NOSPLIT, "func(x, y, out *byte)")
+	Doc("out = not(x and y)")
+	x := Mem{Base: Load(Param("x"), GP64())}
+	y := Mem{Base: Load(Param("y"), GP64())}
+	out := Mem{Base: Load(Param("out"), GP64())}
+
+	X := XMM()
+	Y := XMM()
+
+	MOVOU(x, X)
+	MOVOU(y, Y)
+	PAND(X, Y)
+	PCMPEQB(X, X)
+	PANDN(X, Y)
+	MOVOU(Y, out)
+
+	RET()
+}
+
+func not128() {
+	// not128 function
+	TEXT("not128", NOSPLIT, "func(x *byte)")
+	Doc("not(x)")
+	x := Mem{Base: Load(Param("x"), GP64())}
+
+	X := XMM()
+	Y := XMM()
+
+	MOVOU(x, X)
+	PCMPEQB(Y, Y)
+	PANDN(Y, X)
+	MOVOU(X, x)
+
+	RET()
+}
+
+func xor32x128() {
+	// xor32x128 function
+	TEXT("xor32x128", NOSPLIT, "func(x, y, out *byte)")
+	Doc("out = x xor y")
+	x := Mem{Base: Load(Param("x"), GP64())}
+	y := Mem{Base: Load(Param("y"), GP64())}
+	out := Mem{Base: Load(Param("out"), GP64())}
+
+	X := XMM()
+	Y := XMM()
+
+	count := zero()
+	Label("xor32_loop")
+	MOVOU(x.Idx(count, 1), X)
+	MOVOU(y.Idx(count, 1), Y)
+	PXOR(X, Y)
+	MOVOU(Y, out.Idx(count, 1))
+	ADDQ(U8(16), count)
+	CMPQ(count, U32(512))
+	JL(LabelRef("xor32_loop"))
+
+	RET()
+}
+
+func expandRoundKey128() {
+	// xor32x128 function
+	TEXT("expandRoundKey128", NOSPLIT, "func(x uint32, out *byte)")
+	Doc("16 bytes per bit")
+
+	x := Load(Param("x"), GP32())
+	out := Mem{Base: Load(Param("out"), GP64())}
+	zero := XMM()
+	PXOR(zero, zero)
+	one := XMM()
+	PCMPEQB(one, one)
+
+	y := GP32()
+
+	count := GP64()
+	XORQ(count, count)
+	Comment("Handle first byte")
+	MOVL(U32(0x01000000), y)
+	Label("rk_loop_1")
+	TESTL(x, y)
+	JNZ(LabelRef("rk_loop_1_1"))
+	MOVOU(zero, out.Idx(count, 1))
+	JMP(LabelRef("rk_loop_1_c"))
+	Label("rk_loop_1_1")
+	MOVOU(one, out.Idx(count, 1))
+	Label("rk_loop_1_c")
+	ROLL(U8(1), y)
+	ADDQ(U8(16), count)
+	CMPQ(count, U32(128))
+	JL(LabelRef("rk_loop_1"))
+
+	Comment("Handle second byte")
+	MOVL(U32(0x00010000), y)
+	Label("rk_loop_2")
+	TESTL(x, y)
+	JNZ(LabelRef("rk_loop_2_1"))
+	MOVOU(zero, out.Idx(count, 1))
+	JMP(LabelRef("rk_loop_2_c"))
+	Label("rk_loop_2_1")
+	MOVOU(one, out.Idx(count, 1))
+	Label("rk_loop_2_c")
+	ROLL(U8(1), y)
+	ADDQ(U8(16), count)
+	CMPQ(count, U32(256))
+	JL(LabelRef("rk_loop_2"))
+
+	Comment("Handle third byte")
+	MOVL(U32(0x00000100), y)
+	Label("rk_loop_3")
+	TESTL(x, y)
+	JNZ(LabelRef("rk_loop_3_1"))
+	MOVOU(zero, out.Idx(count, 1))
+	JMP(LabelRef("rk_loop_3_c"))
+	Label("rk_loop_3_1")
+	MOVOU(one, out.Idx(count, 1))
+	Label("rk_loop_3_c")
+	ROLL(U8(1), y)
+	ADDQ(U8(16), count)
+	CMPQ(count, U32(384))
+	JL(LabelRef("rk_loop_3"))
+
+	Comment("Handle last byte")
+	MOVL(U32(0x00000001), y)
+	Label("rk_loop_4")
+	TESTL(x, y)
+	JNZ(LabelRef("rk_loop_4_1"))
+	MOVOU(zero, out.Idx(count, 1))
+	JMP(LabelRef("rk_loop_4_c"))
+	Label("rk_loop_4_1")
+	MOVOU(one, out.Idx(count, 1))
+	Label("rk_loop_4_c")
+	ROLL(U8(1), y)
+	ADDQ(U8(16), count)
+	CMPQ(count, U32(512))
+	JL(LabelRef("rk_loop_4"))
+
+	RET()
+}
+
 func main() {
 	ConstraintExpr("amd64,gc,!purego")
 	transpose64()
 	transpose64Rev()
 	transpose128()
+	xor128()
+	nxor128()
+	or128()
+	nor128()
+	and128()
+	nand128()
+	not128()
+	xor32x128()
+	expandRoundKey128()
 
 	Generate()
 }
