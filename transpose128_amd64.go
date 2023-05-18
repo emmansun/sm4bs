@@ -4,5 +4,11 @@
 
 package sm4bs
 
+// Bit level matrix transpose, 64x128
+func transpose64(in *byte, out *byte)
+
+// Bit level matrix transpose, 128x64
+func transpose64Rev(in *byte, out *byte)
+
 // Bit level matrix transpose, 128x128
 func transpose128(in *byte, out *byte)
