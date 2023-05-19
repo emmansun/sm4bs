@@ -133,24 +133,26 @@ func (bs bs128) middle(p []byte) (l []byte) {
 	size := bs.bytes()
 	l = make([]byte, 4*size)
 
-	t1 := bs.nand(p[3*size:], p)
-	t2 := bs.nor(t1, p[2*size:])
-	t3 := bs.nand(p[2*size:], p)
-	t4 := bs.xor(p[1*size:], t3)
+	nand128(&p[3*size], &p[0], &l[1*size])
+	t8 := bs.nor(l[1*size:], p[2*size:])
+	nand128(&l[1*size], &p[2*size], &l[1*size])
 
-	t5 := bs.nor(p[2*size:], t4)
-	t6 := bs.nand(p[1*size:], t4)
-	t7 := bs.nor(p[3*size:], t4)
-	t8 := bs.nor(t7, t2)
+	t4 := bs.nand(p[2*size:], p)
+	xor128(&p[1*size], &t4[0], &t4[0])
+	nor128(&p[2*size], &t4[0], &l[3*size])
 
-	t9 := bs.nxor(t5, t7)
-	nxor128(&t9[0], &p[3*size], &l[0])
-	nand128(&t6[0], &t8[0], &l[2*size])
+	nand128(&p[1*size], &t4[0], &l[2*size])
+	nor128(&p[3*size], &t4[0], &t4[0])
+
+	nor128(&t4[0], &t8[0], &t8[0])
+	nxor128(&l[3*size], &t4[0], &t4[0])
+
+	nxor128(&t4[0], &p[3*size], &l[0])
+	nand128(&l[2*size], &t8[0], &l[2*size])
 	nand128(&t8[0], &p[1*size], &l[3*size])
 
 	nxor128(&l[3*size], &p[0], &l[3*size])
-	nand128(&t1[0], &p[2*size], &l[1*size])
-	nand128(&t9[0], &l[1*size], &l[1*size])
+	nand128(&t4[0], &l[1*size], &l[1*size])
 
 	return
 }
@@ -159,34 +161,38 @@ func (bs bs128) bottom(g, m, l []byte) (e []byte) {
 	size := bs.bytes()
 	e = make([]byte, 18*size)
 
-	k4 := bs.xor(l[3*size:], l[2*size:])
-	k3 := bs.xor(l[3*size:], l[1*size:])
-	k2 := bs.xor(l[2*size:], l[0*size:])
-	k1 := bs.xor(k3, k2)
-	k0 := bs.xor(l[1*size:], l[0*size:])
+	nand128(&g[5*size], &l[size], &e[size])      // e0
+	nand128(&g[4*size], &l[0], &e[2*size])       // e2
+	nand128(&g[7*size], &l[3*size], &e[7*size])  // e7
+	nand128(&g[6*size], &l[2*size], &e[8*size])  // e8
+	nand128(&g[1*size], &l[1*size], &e[10*size]) // e10
+	nand128(&g[0], &l[0], &e[11*size])           // e11
+	nand128(&g[3*size], &l[3*size], &e[16*size]) // e16
+	nand128(&g[2*size], &l[2*size], &e[17*size]) // e17
 
-	nand128(&m[1*size], &k0[0], &e[0])
-	nand128(&g[5*size], &l[size], &e[size])
-	nand128(&g[4*size], &l[0], &e[2*size])
-	nand128(&m[7*size], &k3[0], &e[3*size])
+	// k1 = e14
+	// k1 := bs.xor(l[1*size:], l[0*size:]) // k0
+	xor128(&l[1*size], &l[0], &e[14*size])
+	nand128(&m[1*size], &e[14*size], &e[0]) // e0
+	nand128(&m[0], &e[14*size], &e[9*size]) // e9
 
-	nand128(&m[5*size], &k2[0], &e[4*size])
-	nand128(&m[3*size], &k1[0], &e[5*size])
-	nand128(&m[9*size], &k4[0], &e[6*size])
-	nand128(&g[7*size], &l[3*size], &e[7*size])
+	xor128(&l[3*size], &l[2*size], &e[14*size])   // k4
+	nand128(&m[9*size], &e[14*size], &e[6*size])  // e6
+	nand128(&m[8*size], &e[14*size], &e[15*size]) // e15
 
-	nand128(&g[6*size], &l[2*size], &e[8*size])
-	nand128(&m[0], &k0[0], &e[9*size])
-	nand128(&g[1*size], &l[1*size], &e[10*size])
-	nand128(&g[0], &l[0], &e[11*size])
+	// k2 = e5
+	// k2 := bs.xor(l[2*size:], l[0*size:])     // k2
+	xor128(&l[2*size], &l[0], &e[5*size])
+	nand128(&m[5*size], &e[5*size], &e[4*size])  // e4
+	nand128(&m[4*size], &e[5*size], &e[13*size]) // e13
 
-	nand128(&m[6*size], &k3[0], &e[12*size])
-	nand128(&m[4*size], &k2[0], &e[13*size])
-	nand128(&m[2*size], &k1[0], &e[14*size])
-	nand128(&m[8*size], &k4[0], &e[15*size])
+	xor128(&l[3*size], &l[1*size], &e[14*size])   // k3
+	nand128(&m[7*size], &e[14*size], &e[3*size])  // e3
+	nand128(&m[6*size], &e[14*size], &e[12*size]) // e12
 
-	nand128(&g[3*size], &l[3*size], &e[16*size])
-	nand128(&g[2*size], &l[2*size], &e[17*size])
+	xor128(&e[5*size], &e[14*size], &e[14*size])  // k1
+	nand128(&m[3*size], &e[14*size], &e[5*size])  // e5
+	nand128(&m[2*size], &e[14*size], &e[14*size]) // e14
 
 	return
 }
@@ -209,25 +215,27 @@ func (bs bs128) output(e, ret []byte) {
 	r10 := bs.xor(e[15*size:], e[16*size:])
 	r11 := bs.xor(e[17*size:], e[16*size:])
 
-	t1 := bs.xor(r9, r7)
-	t2 := bs.xor(r1, t1)
-	t3 := bs.xor(r3, t2)
-	t4 := bs.xor(r5, r3)
+	xor128(&r9[0], &r7[0], &r9[0]) // t1, use r9
+	xor128(&r1[0], &r9[0], &r1[0]) // t2, use r1
+	xor128(&r5[0], &r3[0], &r5[0]) // t4, use r5
+	xor128(&r3[0], &r1[0], &r3[0]) // t3, use r3
 
-	xor128(&r4[0], &t4[0], &ret[6*size]) // t5, use ret6 first
-	t6 := bs.xor(r4, r0)
+	// used r0, r2, r4, r6, r7, r8, r10, r11,
+	// r1, r3, r5, r9
+	xor128(&r4[0], &r5[0], &ret[6*size])  // t5, use ret6 first
+	xor128(&r4[0], &r0[0], &r4[0])        // t6, use r4
 	xor128(&r11[0], &r7[0], &ret[4*size]) // t7, use ret4 first
-	xor128(&t1[0], &t4[0], &ret[5*size])  // t8
+	xor128(&r9[0], &r5[0], &ret[5*size])  // t8
 
-	xor128(&t1[0], &t6[0], &ret[2*size])        // t9
+	xor128(&r9[0], &r4[0], &ret[2*size])        // t9
 	xor128(&r2[0], &ret[6*size], &ret[6*size])  // t0, use ret6 first
 	xor128(&r10[0], &r8[0], &ret[3*size])       // t11
-	nxor128(&t3[0], &ret[3*size], &ret[1*size]) // t12
+	nxor128(&r3[0], &ret[3*size], &ret[1*size]) // t12
 
 	xor128(&ret[6*size], &ret[1*size], &ret[6*size]) // t13
-	nxor128(&t3[0], &ret[4*size], &ret[4*size])      // t14
+	nxor128(&r3[0], &ret[4*size], &ret[4*size])      // t14
 	nxor128(&r10[0], &r6[0], &ret[7*size])           // t15
-	xor128(&t6[0], &ret[4*size], &ret[0])            // t16
+	xor128(&r4[0], &ret[4*size], &ret[0])            // t16
 }
 
 func (bs bs128) sbox(bytes []byte) {
