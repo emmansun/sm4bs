@@ -53,10 +53,8 @@ func (bs bs128) not(x []byte) []byte {
 
 // input bytes = 8 x 16 bytes
 // g = 8 x 16 bytes, m = 10 x 16 bytes
-func (bs bs128) input(bytes []byte) (g []byte, m []byte) {
+func (bs bs128) input(bytes, g, m []byte) {
 	size := bs.bytes()
-	g = make([]byte, 8*size)
-	m = make([]byte, 10*size)
 
 	b0 := bytes[:size]
 	b1 := bytes[size : 2*size]
@@ -89,21 +87,23 @@ func (bs bs128) input(bytes []byte) (g []byte, m []byte) {
 	bs.not(g[5*size:])
 
 	copy(m[6*size:], b1)
-
-	return
 }
 
-func (bs bs128) top(g, m []byte) (p []byte) {
+func (bs bs128) top(g, m, p, buffer []byte) {
 	size := bs.bytes()
-	p = make([]byte, 4*size)
 
-	t13 := bs.nand(g[5*size:], g[size:])
-	t15 := bs.nand(m[1*size:], m)
-	t14 := bs.nand(g[4*size:], g)
+	t13 := buffer
+	t15 := buffer[size:]
+	t14 := buffer[2*size:]
+	t6 := buffer[3*size:]
+	t8 := buffer[4*size:]
+	nand128(&g[5*size], &g[size], &t13[0])
+	nand128(&m[size], &m[0], &t15[0])
+	nand128(&g[4*size], &g[0], &t14[0])
 	nand128(&g[7*size], &g[3*size], &p[0])    // p0
 	nand128(&m[9*size], &m[8*size], &p[size]) // p1
-	t6 := bs.nor(g[6*size:], g[2*size:])
-	t8 := bs.nor(m[9*size:], m[8*size:])
+	nor128(&g[6*size], &g[2*size], &t6[0])
+	nor128(&m[9*size], &m[8*size], &t8[0])
 
 	xor128(&t13[0], &t15[0], &t13[0])
 	xor128(&t14[0], &t15[0], &t14[0])
@@ -125,19 +125,18 @@ func (bs bs128) top(g, m []byte) (p []byte) {
 	xor128(&p[1*size], &p[2*size], &p[2*size])
 	xor128(&t8[0], &t15[0], &p[1*size])
 	xor128(&t6[0], &t14[0], &p[0])
-
-	return
 }
 
-func (bs bs128) middle(p []byte) (l []byte) {
+func (bs bs128) middle(p, l, buffer []byte) {
 	size := bs.bytes()
-	l = make([]byte, 4*size)
 
+	t8 := buffer
+	t4 := buffer[size:]
 	nand128(&p[3*size], &p[0], &l[1*size])
-	t8 := bs.nor(l[1*size:], p[2*size:])
+	nor128(&l[1*size], &p[2*size], &t8[0])
 	nand128(&l[1*size], &p[2*size], &l[1*size])
 
-	t4 := bs.nand(p[2*size:], p)
+	nand128(&p[2*size], &p[0], &t4[0])
 	xor128(&p[1*size], &t4[0], &t4[0])
 	nor128(&p[2*size], &t4[0], &l[3*size])
 
@@ -154,12 +153,10 @@ func (bs bs128) middle(p []byte) (l []byte) {
 	nxor128(&l[3*size], &p[0], &l[3*size])
 	nand128(&t4[0], &l[1*size], &l[1*size])
 
-	return
 }
 
-func (bs bs128) bottom(g, m, l []byte) (e []byte) {
+func (bs bs128) bottom(g, m, l, e []byte) {
 	size := bs.bytes()
-	e = make([]byte, 18*size)
 
 	nand128(&g[5*size], &l[size], &e[size])      // e0
 	nand128(&g[4*size], &l[0], &e[2*size])       // e2
@@ -194,7 +191,6 @@ func (bs bs128) bottom(g, m, l []byte) (e []byte) {
 	nand128(&m[3*size], &e[14*size], &e[5*size])  // e5
 	nand128(&m[2*size], &e[14*size], &e[14*size]) // e14
 
-	return
 }
 
 func (bs bs128) output(e, ret []byte) {
@@ -240,15 +236,19 @@ func (bs bs128) output(e, ret []byte) {
 	xor128(&e[3*size], &ret[4*size], &ret[0])        // t16
 }
 
-func (bs bs128) sbox(bytes []byte) {
-	g, m := bs.input(bytes)
-	bs.output(bs.bottom(g, m, bs.middle(bs.top(g, m))), bytes)
+func (bs bs128) sbox(bytes, buffer []byte) {
+	size := bs.bytes()
+	bs.input(bytes, buffer, buffer[8*size:])
+	bs.top(buffer, buffer[8*size:], buffer[22*size:], buffer[26*size:])
+	bs.middle(buffer[22*size:], buffer[18*size:], buffer[26*size:])
+	bs.bottom(buffer, buffer[8*size:], buffer[18*size:], buffer[22*size:])
+	bs.output(buffer[22*size:], bytes)
 }
 
-func (bs bs128) tao(x []byte) []byte {
+func (bs bs128) tao(x, buffer []byte) []byte {
 	size := 8 * bs.bytes()
 	for i := 0; i < 4; i++ {
-		bs.sbox(x[i*size : (i+1)*size])
+		bs.sbox(x[i*size:(i+1)*size], buffer)
 	}
 	return x
 }
@@ -271,9 +271,8 @@ func (bs bs128) roundKey(in uint32, out []byte) {
 
 // 24 25 26 27 28 29 30 31 | 16 17 18 19 20 21 22 23 |  8  9 10 11 12 13 14 15 |  0  1  2  3  4  5  6  7
 // 22 23 24 25 26 27 28 29 | 14 15 16 17 18 19 20 21 |  6  7  8  9 10 11 12 13 | 30 31  0  1  2  3  4  5
-func (bs bs128) rotateLeft32_2(x []byte) []byte {
+func (bs bs128) rotateLeft32_2(x, ret []byte) []byte {
 	size := bs.bytes()
-	ret := make([]byte, 32*size)
 	copy(ret, x[(16-2)*size:16*size])
 	copy(ret[2*size:], x[:(8-2)*size])
 
@@ -291,9 +290,8 @@ func (bs bs128) rotateLeft32_2(x []byte) []byte {
 
 // 24 25 26 27 28 29 30 31 | 16 17 18 19 20 21 22 23 |  8  9 10 11 12 13 14 15 |  0  1  2  3  4  5  6  7
 // 14 15 16 17 18 19 20 21 |  6  7  8  9 10 11 12 13 | 30 31  0  1  2  3  4  5 | 22 23 24 25 26 27 28 29
-func (bs bs128) rotateLeft32_10(x []byte) []byte {
+func (bs bs128) rotateLeft32_10(x, ret []byte) []byte {
 	size := bs.bytes()
-	ret := make([]byte, 32*size)
 
 	copy(ret, x[(24-2)*size:24*size])
 	copy(ret[2*size:], x[8*size:(16-2)*size])
@@ -312,9 +310,8 @@ func (bs bs128) rotateLeft32_10(x []byte) []byte {
 
 // 24 25 26 27 28 29 30 31 | 16 17 18 19 20 21 22 23 |  8  9 10 11 12 13 14 15 |  0  1  2  3  4  5  6  7
 //  6  7  8  9 10 11 12 13 | 30 31  0  1  2  3  4  5 | 22 23 24 25 26 27 28 19 | 14 15 16 17 18 19 20 21
-func (bs bs128) rotateLeft32_18(x []byte) []byte {
+func (bs bs128) rotateLeft32_18(x, ret []byte) []byte {
 	size := bs.bytes()
-	ret := make([]byte, 32*size)
 
 	copy(ret, x[(32-2)*size:32*size])
 	copy(ret[2*size:], x[16*size:(24-2)*size])
@@ -333,9 +330,8 @@ func (bs bs128) rotateLeft32_18(x []byte) []byte {
 
 // 24 25 26 27 28 29 30 31 | 16 17 18 19 20 21 22 23 |  8  9 10 11 12 13 14 15 | 0  1  2  3  4  5  6  7
 //  0  1  2  3  4  5  6  7 | 24 25 26 27 28 29 30 31 | 16 17 18 19 20 21 22 23 | 8  9 10 11 12 13 14 15
-func (bs bs128) rotateLeft32_24(x []byte) []byte {
+func (bs bs128) rotateLeft32_24(x, ret []byte) []byte {
 	size := bs.bytes()
-	ret := make([]byte, 32*size)
 
 	copy(ret, x[24*size:])
 	copy(ret[8*size:], x[:24*size])
@@ -343,13 +339,14 @@ func (bs bs128) rotateLeft32_24(x []byte) []byte {
 	return ret
 }
 
-func (bs bs128) l(x []byte) []byte {
-	ret1 := bs.rotateLeft32_2(x)
-	ret2 := bs.rotateLeft32_10(x)
+func (bs bs128) l(x, buffer []byte) []byte {
+	size := bs.bytes()
+	ret1 := bs.rotateLeft32_2(x, buffer)
+	ret2 := bs.rotateLeft32_10(x, buffer[32*size:])
 	ret1 = bs.xor32(ret1, ret2)
-	ret2 = bs.rotateLeft32_18(x)
+	ret2 = bs.rotateLeft32_18(x, buffer[32*size:])
 	ret1 = bs.xor32(ret1, ret2)
-	ret2 = bs.rotateLeft32_24(x)
+	ret2 = bs.rotateLeft32_24(x, buffer[32*size:])
 	ret1 = bs.xor32(ret1, ret2)
 	return bs.xor32(x, ret1)
 }
@@ -368,16 +365,16 @@ func (bs bs128) EncryptBlocks(xk []uint32, dst, src []byte) {
 	b3 := state[96*bitSize:]
 
 	rk := make([]byte, 32*bitSize)
-
+	buffer := make([]byte, 64*bitSize)
 	for i := 0; i < 8; i++ {
 		bs.roundKey(xk[i*4], rk)
-		b0 = bs.xor32(b0, bs.l(bs.tao(bs.xorRK(rk, b1, b2, b3))))
+		b0 = bs.xor32(b0, bs.l(bs.tao(bs.xorRK(rk, b1, b2, b3), buffer), buffer))
 		bs.roundKey(xk[i*4+1], rk)
-		b1 = bs.xor32(b1, bs.l(bs.tao(bs.xorRK(rk, b2, b3, b0))))
+		b1 = bs.xor32(b1, bs.l(bs.tao(bs.xorRK(rk, b2, b3, b0), buffer), buffer))
 		bs.roundKey(xk[i*4+2], rk)
-		b2 = bs.xor32(b2, bs.l(bs.tao(bs.xorRK(rk, b3, b0, b1))))
+		b2 = bs.xor32(b2, bs.l(bs.tao(bs.xorRK(rk, b3, b0, b1), buffer), buffer))
 		bs.roundKey(xk[i*4+3], rk)
-		b3 = bs.xor32(b3, bs.l(bs.tao(bs.xorRK(rk, b0, b1, b2))))
+		b3 = bs.xor32(b3, bs.l(bs.tao(bs.xorRK(rk, b0, b1, b2), buffer), buffer))
 	}
 	copy(rk, b0)
 	copy(state[:], b3)

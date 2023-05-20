@@ -24,9 +24,10 @@ func newByte128(b byte) []byte {
 }
 
 func TestSbox(t *testing.T) {
+	buffer := make([]byte, 64*BS128.bytes())
 	for i := 0; i < 256; i++ {
 		iBytes := newByte128(byte(i))
-		BS128.sbox(iBytes)
+		BS128.sbox(iBytes, buffer)
 		expected := newByte128(sbox[i])
 		if !bytes.Equal(iBytes, expected) {
 			t.Fatalf("unexpected result for %v.", i)
@@ -36,6 +37,7 @@ func TestSbox(t *testing.T) {
 
 func TestTao(t *testing.T) {
 	x := make([]byte, 32*BS128.bytes())
+	buffer := make([]byte, 64*BS128.bytes())
 	expected := make([]byte, 32*BS128.bytes())
 
 	copy(x, newByte128(byte(0)))
@@ -48,7 +50,7 @@ func TestTao(t *testing.T) {
 	copy(expected[16*BS128.bytes():], newByte128(sbox[2]))
 	copy(expected[24*BS128.bytes():], newByte128(sbox[3]))
 
-	ret := BS128.tao(x)
+	ret := BS128.tao(x, buffer)
 	if !bytes.Equal(ret, expected) {
 		t.Fatalf("unexpected tao result")
 	}
@@ -58,7 +60,7 @@ func TestRotateLeft32_2(t *testing.T) {
 	x := make([]byte, 32*BS128.bytes())
 	expected := make([]byte, 32*BS128.bytes())
 	expected1 := make([]byte, 32*BS128.bytes())
-
+	buffer := make([]byte, 32*BS128.bytes())
 	b := bits.RotateLeft32(0x00010203, 2)
 	BS128.roundKey(b, expected)
 
@@ -72,7 +74,7 @@ func TestRotateLeft32_2(t *testing.T) {
 	copy(x[16*BS128.bytes():], newByte128(byte(2)))
 	copy(x[24*BS128.bytes():], newByte128(byte(3)))
 
-	ret := BS128.rotateLeft32_2(x)
+	ret := BS128.rotateLeft32_2(x, buffer)
 
 	if !bytes.Equal(ret, expected) {
 		t.Fatalf("unexpected rotateLeft32_2 result, expected %x, got %x", expected, ret)
