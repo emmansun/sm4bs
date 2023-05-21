@@ -35,6 +35,17 @@ func TestSbox(t *testing.T) {
 	}
 }
 
+func BenchmarkSbox128(b *testing.B) {
+	buffer := make([]byte, 64*BS128.bytes())
+	b.ReportAllocs()
+	b.ResetTimer()
+	x := newByte128(byte(14))
+
+	for i := 0; i < b.N; i++ {
+		BS128.sbox(x, buffer)
+	}
+}
+
 func TestTao(t *testing.T) {
 	x := make([]byte, 32*BS128.bytes())
 	buffer := make([]byte, 64*BS128.bytes())
@@ -53,6 +64,22 @@ func TestTao(t *testing.T) {
 	ret := BS128.tao(x, buffer)
 	if !bytes.Equal(ret, expected) {
 		t.Fatalf("unexpected tao result")
+	}
+}
+
+func BenchmarkTao128(b *testing.B) {
+	x := make([]byte, 32*BS128.bytes())
+	buffer := make([]byte, 64*BS128.bytes())
+	copy(x, newByte128(byte(0)))
+	copy(x[8*BS128.bytes():], newByte128(byte(1)))
+	copy(x[16*BS128.bytes():], newByte128(byte(2)))
+	copy(x[24*BS128.bytes():], newByte128(byte(3)))
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		BS128.tao(x, buffer)
 	}
 }
 
@@ -78,6 +105,146 @@ func TestRotateLeft32_2(t *testing.T) {
 
 	if !bytes.Equal(ret, expected) {
 		t.Fatalf("unexpected rotateLeft32_2 result, expected %x, got %x", expected, ret)
+	}
+}
+
+func BenchmarkRotateLeft32_2(b *testing.B) {
+	x := make([]byte, 32*BS128.bytes())
+	buffer := make([]byte, 32*BS128.bytes())
+	copy(x, newByte128(byte(0)))
+	copy(x[8*BS128.bytes():], newByte128(byte(1)))
+	copy(x[16*BS128.bytes():], newByte128(byte(2)))
+	copy(x[24*BS128.bytes():], newByte128(byte(3)))
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		BS128.rotateLeft32_2(x, buffer)
+	}
+}
+
+func TestRotateLeft32_10(t *testing.T) {
+	x := make([]byte, 32*BS128.bytes())
+	expected := make([]byte, 32*BS128.bytes())
+	buffer := make([]byte, 64*BS128.bytes())
+	b := bits.RotateLeft32(0x00010203, 10)
+	BS128.roundKey(b, expected)
+
+	copy(x, newByte128(byte(0)))
+	copy(x[8*BS128.bytes():], newByte128(byte(1)))
+	copy(x[16*BS128.bytes():], newByte128(byte(2)))
+	copy(x[24*BS128.bytes():], newByte128(byte(3)))
+
+	BS128.rotateLeft32_2(x, buffer)
+	BS128.rotateLeft32_8(buffer, x)
+
+	if !bytes.Equal(x, expected) {
+		t.Fatalf("unexpected rotateLeft32_2 result, expected %x, got %x", expected, x)
+	}
+}
+
+func BenchmarkRotateLeft32_10(b *testing.B) {
+	x := make([]byte, 32*BS128.bytes())
+	buffer := make([]byte, 32*BS128.bytes())
+	copy(x, newByte128(byte(0)))
+	copy(x[8*BS128.bytes():], newByte128(byte(1)))
+	copy(x[16*BS128.bytes():], newByte128(byte(2)))
+	copy(x[24*BS128.bytes():], newByte128(byte(3)))
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		BS128.rotateLeft32_10(x, buffer)
+	}
+}
+
+func TestRotateLeft32_18(t *testing.T) {
+	x := make([]byte, 32*BS128.bytes())
+	expected := make([]byte, 32*BS128.bytes())
+	buffer := make([]byte, 32*BS128.bytes())
+	b := bits.RotateLeft32(0x00010203, 18)
+	BS128.roundKey(b, expected)
+
+	copy(x, newByte128(byte(0)))
+	copy(x[8*BS128.bytes():], newByte128(byte(1)))
+	copy(x[16*BS128.bytes():], newByte128(byte(2)))
+	copy(x[24*BS128.bytes():], newByte128(byte(3)))
+
+	BS128.rotateLeft32_2(x, buffer)
+	BS128.rotateLeft32_8(buffer, x)
+	BS128.rotateLeft32_8(x, buffer)
+
+	if !bytes.Equal(buffer, expected) {
+		t.Fatalf("unexpected rotateLeft32_2 result, expected %x, got %x", expected, buffer)
+	}
+}
+
+func BenchmarkRotateLeft32_18(b *testing.B) {
+	x := make([]byte, 32*BS128.bytes())
+	buffer := make([]byte, 32*BS128.bytes())
+	copy(x, newByte128(byte(0)))
+	copy(x[8*BS128.bytes():], newByte128(byte(1)))
+	copy(x[16*BS128.bytes():], newByte128(byte(2)))
+	copy(x[24*BS128.bytes():], newByte128(byte(3)))
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		BS128.rotateLeft32_18(x, buffer)
+	}
+}
+
+func BenchmarkRotateLeft32_24(b *testing.B) {
+	x := make([]byte, 32*BS128.bytes())
+	buffer := make([]byte, 32*BS128.bytes())
+	copy(x, newByte128(byte(0)))
+	copy(x[8*BS128.bytes():], newByte128(byte(1)))
+	copy(x[16*BS128.bytes():], newByte128(byte(2)))
+	copy(x[24*BS128.bytes():], newByte128(byte(3)))
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		BS128.rotateLeft32_24(x, buffer)
+	}
+}
+
+func TestL128(t *testing.T) {
+	x := make([]byte, 32*BS128.bytes())
+	expected := make([]byte, 32*BS128.bytes())
+	buffer := make([]byte, 64*BS128.bytes())
+	b := 0x00010203 ^ bits.RotateLeft32(0x00010203, 2) ^ bits.RotateLeft32(0x00010203, 10) ^ bits.RotateLeft32(0x00010203, 18) ^ bits.RotateLeft32(0x00010203, 24)
+	BS128.roundKey(b, expected)
+
+	copy(x, newByte128(byte(0)))
+	copy(x[8*BS128.bytes():], newByte128(byte(1)))
+	copy(x[16*BS128.bytes():], newByte128(byte(2)))
+	copy(x[24*BS128.bytes():], newByte128(byte(3)))
+
+	ret := BS128.l(x, buffer)
+
+	if !bytes.Equal(ret, expected) {
+		t.Fatalf("unexpected rotateLeft32_2 result, expected %x, got %x", expected, ret)
+	}
+}
+
+func BenchmarkL128(b *testing.B) {
+	x := make([]byte, 32*BS128.bytes())
+	buffer := make([]byte, 64*BS128.bytes())
+	copy(x, newByte128(byte(0)))
+	copy(x[8*BS128.bytes():], newByte128(byte(1)))
+	copy(x[16*BS128.bytes():], newByte128(byte(2)))
+	copy(x[24*BS128.bytes():], newByte128(byte(3)))
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		BS128.l(x, buffer)
 	}
 }
 

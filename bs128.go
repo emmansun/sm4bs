@@ -273,17 +273,20 @@ func (bs bs128) roundKey(in uint32, out []byte) {
 // 22 23 24 25 26 27 28 29 | 14 15 16 17 18 19 20 21 |  6  7  8  9 10 11 12 13 | 30 31  0  1  2  3  4  5
 func (bs bs128) rotateLeft32_2(x, ret []byte) []byte {
 	size := bs.bytes()
+
+	copy(ret[2*size:], x)
+
 	copy(ret, x[(16-2)*size:16*size])
-	copy(ret[2*size:], x[:(8-2)*size])
+	//copy(ret[2*size:], x[:(8-2)*size])
 
 	copy(ret[8*size:], x[(24-2)*size:24*size])
-	copy(ret[(8+2)*size:], x[8*size:(16-2)*size])
+	//copy(ret[(8+2)*size:], x[8*size:(16-2)*size])
 
 	copy(ret[16*size:], x[(32-2)*size:])
-	copy(ret[(16+2)*size:], x[16*size:(24-2)*size])
+	//copy(ret[(16+2)*size:], x[16*size:(24-2)*size])
 
 	copy(ret[24*size:], x[(8-2)*size:8*size])
-	copy(ret[(24+2)*size:], x[24*size:(32-2)*size])
+	//copy(ret[(24+2)*size:], x[24*size:(32-2)*size])
 
 	return ret
 }
@@ -333,22 +336,46 @@ func (bs bs128) rotateLeft32_18(x, ret []byte) []byte {
 func (bs bs128) rotateLeft32_24(x, ret []byte) []byte {
 	size := bs.bytes()
 
-	copy(ret, x[24*size:])
+	copy(ret, x[24*size:32*size])
 	copy(ret[8*size:], x[:24*size])
+
+	return ret
+}
+
+func (bs bs128) rotateLeft32_8(x, ret []byte) []byte {
+	size := bs.bytes()
+
+	copy(ret, x[8*size:32*size])
+	copy(ret[24*size:], x[:8*size])
 
 	return ret
 }
 
 func (bs bs128) l(x, buffer []byte) []byte {
 	size := bs.bytes()
-	ret1 := bs.rotateLeft32_2(x, buffer)
-	ret2 := bs.rotateLeft32_10(x, buffer[32*size:])
-	ret1 = bs.xor32(ret1, ret2)
-	ret2 = bs.rotateLeft32_18(x, buffer[32*size:])
-	ret1 = bs.xor32(ret1, ret2)
-	ret2 = bs.rotateLeft32_24(x, buffer[32*size:])
-	ret1 = bs.xor32(ret1, ret2)
-	return bs.xor32(x, ret1)
+
+	// rotateLeft32_24 first
+	ret1 := bs.rotateLeft32_24(x, buffer[:32*size])
+	bs.xor32(ret1, x)
+	ret2 := bs.rotateLeft32_2(x, buffer[32*size:])
+	bs.xor32(ret1, ret2)
+
+	bs.rotateLeft32_8(ret2, x)
+	bs.xor32(ret1, x)
+
+	bs.rotateLeft32_8(x, ret2)
+	return bs.xor32(ret1, ret2)
+
+	/*
+		ret1 := bs.rotateLeft32_2(x, buffer)
+		ret2 := bs.rotateLeft32_10(x, buffer[32*size:])
+		ret1 = bs.xor32(ret1, ret2)
+		ret2 = bs.rotateLeft32_18(x, buffer[32*size:])
+		ret1 = bs.xor32(ret1, ret2)
+		ret2 = bs.rotateLeft32_24(x, buffer[32*size:])
+		ret1 = bs.xor32(ret1, ret2)
+		return bs.xor32(x, ret1)
+	*/
 }
 
 func (bs bs128) EncryptBlocks(xk []uint32, dst, src []byte) {
