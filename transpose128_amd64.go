@@ -21,3 +21,6 @@ func xorRoundKey128(rk uint32, x1 *byte, x2 *byte, x3 *byte, out *byte)
 
 // sbox128, 128 bits per 'byte'
 func sbox128(x *byte, buffer *byte)
+
+// l128, 128 bits per 'byte'
+func l128(x *byte, buffer *byte)

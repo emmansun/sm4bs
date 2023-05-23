@@ -29,70 +29,9 @@ func (bs bs128) xorRK(k uint32, rk, x1, x2, x3 []byte) []byte {
 	return rk
 }
 
-/*
-func (bs bs128) roundKey(in uint32, out []byte) {
-	expandRoundKey128(in, &out[0])
-}
-*/
-// 24 25 26 27 28 29 30 31 | 16 17 18 19 20 21 22 23 |  8  9 10 11 12 13 14 15 |  0  1  2  3  4  5  6  7
-// 22 23 24 25 26 27 28 29 | 14 15 16 17 18 19 20 21 |  6  7  8  9 10 11 12 13 | 30 31  0  1  2  3  4  5
-func (bs bs128) rotateLeft32_2(x, ret []byte) []byte {
-	size := bs.bytes()
-
-	copy(ret[2*size:], x)
-
-	copy(ret, x[(16-2)*size:16*size])
-	//copy(ret[2*size:], x[:(8-2)*size])
-
-	copy(ret[8*size:], x[(24-2)*size:24*size])
-	//copy(ret[(8+2)*size:], x[8*size:(16-2)*size])
-
-	copy(ret[16*size:], x[(32-2)*size:])
-	//copy(ret[(16+2)*size:], x[16*size:(24-2)*size])
-
-	copy(ret[24*size:], x[(8-2)*size:8*size])
-	//copy(ret[(24+2)*size:], x[24*size:(32-2)*size])
-
-	return ret
-}
-
-// 24 25 26 27 28 29 30 31 | 16 17 18 19 20 21 22 23 |  8  9 10 11 12 13 14 15 | 0  1  2  3  4  5  6  7
-//  0  1  2  3  4  5  6  7 | 24 25 26 27 28 29 30 31 | 16 17 18 19 20 21 22 23 | 8  9 10 11 12 13 14 15
-func (bs bs128) rotateLeft32_24(x, ret []byte) []byte {
-	size := bs.bytes()
-
-	copy(ret, x[24*size:32*size])
-	copy(ret[8*size:], x[:24*size])
-
-	return ret
-}
-
-func (bs bs128) rotateLeft32_8(x, ret []byte) []byte {
-	size := bs.bytes()
-
-	copy(ret, x[8*size:32*size])
-	copy(ret[24*size:], x[:8*size])
-
-	return ret
-}
-
 func (bs bs128) l(x, buffer []byte) []byte {
-	size := bs.bytes()
-
-	// rotateLeft32_24 first
-	ret1 := bs.rotateLeft32_24(x, buffer[:32*size])
-	bs.xor32(ret1, x)
-	// rotateLeft32_2
-	ret2 := bs.rotateLeft32_2(x, buffer[32*size:])
-	bs.xor32(ret1, ret2)
-
-	// rotateLeft32_8 based one rotateLeft32_2
-	bs.rotateLeft32_8(ret2, x)
-	bs.xor32(ret1, x)
-
-	// rotateLeft32_8 based one rotateLeft32_10
-	bs.rotateLeft32_8(x, ret2)
-	return bs.xor32(ret1, ret2)
+	l128(&x[0], &buffer[0])
+	return buffer
 }
 
 func (bs bs128) EncryptBlocks(xk []uint32, dst, src []byte) {
@@ -108,8 +47,9 @@ func (bs bs128) EncryptBlocks(xk []uint32, dst, src []byte) {
 	b2 := state[64*bitSize : 96*bitSize]
 	b3 := state[96*bitSize:]
 
-	rk := make([]byte, 32*bitSize)
 	buffer := make([]byte, 64*bitSize)
+	rk := buffer[:32*bitSize]
+	buffer = buffer[32*bitSize:]
 	for i := 0; i < 8; i++ {
 		b0 = bs.xor32(b0, bs.l(bs.tao(bs.xorRK(xk[i*4], rk, b1, b2, b3), buffer), buffer))
 		b1 = bs.xor32(b1, bs.l(bs.tao(bs.xorRK(xk[i*4+1], rk, b2, b3, b0), buffer), buffer))

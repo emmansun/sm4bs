@@ -535,8 +535,8 @@ func sbox128() {
 	Comment("p1 = t8 ^ t15")
 	PXOR(t10, t3) // p1 = t8 ^ t15
 
-	Comment("Start middle function")
-	Comment("Current register status: t8=p0, t3=p1, t4=p2, t7=p0")
+	Comment("start middle function")
+	Comment("current register status: t8=p0, t3=p1, t4=p2, t7=p0")
 
 	// t3 = p1
 	// t4 = p2
@@ -609,8 +609,8 @@ func sbox128() {
 	PAND(t9, t7)
 	PANDN(f, t7) // l1
 
-	Comment("Start bottom function")
-	Comment("Current register status: t11=l0, t7=l1, t6=l2, t12=l3")
+	Comment("start bottom function")
+	Comment("current register status: t11=l0, t7=l1, t6=l2, t12=l3")
 	Comment("k4 = l2 ^ l3")
 	MOVOU(t12, t5)
 	PXOR(t6, t5) // k4 = l2 ^ l3
@@ -631,7 +631,6 @@ func sbox128() {
 	MOVOU(buffer.Offset((8+1)*16), t8) // m1
 	PAND(t1, t8)
 	PANDN(f, t8) // e0
-	MOVOU(t8, buffer.Offset(22*16))
 
 	Comment("e1=^(g5 & l1)")
 	MOVOU(buffer.Offset(5*16), t9)
@@ -648,8 +647,8 @@ func sbox128() {
 	Comment("r1=e2 ^ e1")
 	PXOR(t10, t9) // r1 = e2 ^ e1
 
-	Comment("Store r0 r1")
-	MOVOU(t8, buffer.Offset(22*16))
+	Comment("store r0 r1")
+	MOVOU(t8, buffer.Offset(22*16)) // in fact, we can start from 18*16
 	MOVOU(t9, buffer.Offset(23*16))
 
 	Comment("e3=^(m7 & k3)")
@@ -671,7 +670,7 @@ func sbox128() {
 	Comment("r3=e5 ^ e4")
 	PXOR(t10, t9) // r3 = e5 ^ e4
 
-	Comment("Store r2 r3")
+	Comment("store r2 r3")
 	MOVOU(t8, buffer.Offset(24*16))
 	MOVOU(t9, buffer.Offset(25*16))
 
@@ -694,7 +693,7 @@ func sbox128() {
 	Comment("r5=e8 ^ e6")
 	PXOR(t10, t9) // r5 = e8 ^ e7
 
-	Comment("Store r4 r5")
+	Comment("store r4 r5")
 	MOVOU(t8, buffer.Offset(26*16))
 	MOVOU(t9, buffer.Offset(27*16))
 
@@ -717,7 +716,7 @@ func sbox128() {
 	PANDN(f, t10) // e11
 	Comment("r7=e11 ^ e10")
 	PXOR(t10, t9) // r7 = e11 ^ e10
-	Comment("Store r6 r7")
+	Comment("store r6 r7")
 	MOVOU(t8, buffer.Offset(28*16))
 	MOVOU(t9, buffer.Offset(29*16))
 
@@ -762,7 +761,7 @@ func sbox128() {
 	Comment("r11=e17 ^ e16")
 	PXOR(t10, t9) // r11 = e17 ^ e16 = t9
 
-	Comment("Start output function")
+	Comment("start output function")
 	// t7 = r8
 	// t11 = r9
 	// t8 = r10
@@ -791,44 +790,348 @@ func sbox128() {
 	PXOR(t9, t1) // [t7] t1 = r7 ^ r11
 	Comment("[t8]=[t1] ^ t4")
 	PXOR(t11, t4) // [t8] t4 = t4 ^ t11
-	Comment("Store t8")
+	Comment("store t8")
 	MOVOU(t4, b.Offset(5*16))
 	Comment("[t9]=[t1] ^ t6")
 	PXOR(t6, t11) // [t9] t11 = t11 ^ t6
-	Comment("Store t9")
+	Comment("store t9")
 	MOVOU(t11, b.Offset(2*16))
 
 	Comment("[t10]=r2 ^ t5")
 	PXOR(buffer.Offset((22+2)*16), t5) // [t10] t5 = r2 ^ t5
 	Comment("[t11]=r10 ^ r8")
 	PXOR(t8, t7) // [t11] t7 = rr8 ^ r10
-	Comment("Store t11")
+	Comment("store t11")
 	MOVOU(t7, b.Offset(3*16))
 	Comment("[t12]=^(t3 ^ [t11])")
 	PXOR(t3, t7) // t7 = t3 ^ [t11]
 	PANDN(f, t7) // [t12] t7 = ^(t3 ^ [t11])
-	Comment("Store t12")
+	Comment("store t12")
 	MOVOU(t7, b.Offset(1*16))
 	Comment("[t13]=[t10] ^ [t12]")
 	PXOR(t7, t5) // [t13] t5 = [t10] ^ [t12]
-	Comment("Store t13")
+	Comment("store t13")
 	MOVOU(t5, b.Offset(6*16))
 
 	Comment("[t14]=^(t3 ^ [t7])")
 	PXOR(t3, t1)
 	PANDN(f, t1) // [t14]
-	Comment("Store t14")
+	Comment("store t14")
 	MOVOU(t1, b.Offset(4*16))
 	Comment("[t16]=t6 ^ [t14]")
 	PXOR(t6, t1) // [t16]
-	Comment("Store t16")
+	Comment("store t16")
 	MOVOU(t1, b)
 
 	Comment("[t15]=^(r10 ^ r6)")
 	PXOR(buffer.Offset((22+6)*16), t8)
 	PANDN(f, t8)
-	Comment("Store t15")
+	Comment("store t15")
 	MOVOU(t8, b.Offset(7*16))
+
+	RET()
+}
+
+// 0  1  2  3  4  5  6  7 |  8  9 10 11 12 13 14 15 | 16 17 18 19 20 21 22 23 | 24 25 26 27 28 29 30 31
+//24 25 26 27 28 29 30 31 |  0  1  2  3  4  5  6  7 |  8  9 10 11 12 13 14 15 | 16 17 18 19 20 21 22 23
+//14 15  0  1  2  3  4  5 | 22 23  8  9 10 11 12 13 | 30 31 16 17 18 19 20 21 |  6  7 24 25 26 27 28 29
+//22 23  8  9 10 11 12 13 | 30 31 16 17 18 19 20 21 |  6  7 24 25 26 27 28 29 | 14 15  0  1  2  3  4  5
+//30 31 16 17 18 19 20 21 |  6  7 24 25 26 27 28 29 | 14 15  0  1  2  3  4  5 | 22 23  8  9 10 11 12 13
+func l128() {
+	// l128 function
+	TEXT("l128", NOSPLIT, "func(x, buffer *byte)")
+	Doc("l128, 128 bits per 'byte'")
+
+	b := Mem{Base: Load(Param("x"), GP64())}
+	buffer := Mem{Base: Load(Param("buffer"), GP64())}
+
+	X0, X1, X2, X3, X4, X5, X6, X7, X8, X9 := XMM(), XMM(), XMM(), XMM(), XMM(), XMM(), XMM(), XMM(), XMM(), XMM()
+
+	MOVOU(b, X0)
+	MOVOU(b.Offset(8*16), X1)
+	MOVOU(b.Offset(16*16), X2)
+	MOVOU(b.Offset(24*16), X3)
+	MOVOU(b.Offset(18*16), X5)
+	MOVOU(b.Offset(22*16), X6)
+	MOVOU(b.Offset(26*16), X7)
+	MOVOU(b.Offset(30*16), X8)
+	MOVOU(b.Offset(2*16), X9)
+
+	Comment("0=0^24^14^22^30")
+	MOVOU(X0, X4)
+	PXOR(X3, X4)
+	PXOR(b.Offset(14*16), X4)
+	PXOR(X6, X4)
+	PXOR(X8, X4)
+	MOVOU(X4, buffer)
+
+	Comment("2=0^2^26^8^16")
+	MOVOU(X0, X4)
+	PXOR(X9, X4)
+	PXOR(X7, X4)
+	PXOR(X1, X4)
+	PXOR(X2, X4)
+	MOVOU(X4, buffer.Offset(2*16))
+
+	Comment("8=0^8^22^30^6")
+	MOVOU(X0, X4)
+	PXOR(X1, X4)
+	PXOR(X6, X4)
+	PXOR(X8, X4)
+	PXOR(b.Offset(6*16), X4)
+	MOVOU(X4, buffer.Offset(8*16))
+
+	Comment("18=0^18^10^16^24")
+	MOVOU(X0, X4)
+	PXOR(X5, X4)
+	PXOR(b.Offset(10*16), X4)
+	PXOR(X2, X4)
+	PXOR(X3, X4)
+	MOVOU(X4, buffer.Offset(18*16))
+
+	Comment("26=0^26^18^24^8")
+	PXOR(X1, X0)
+	PXOR(X7, X0)
+	PXOR(X5, X0)
+	PXOR(X3, X0)
+	MOVOU(X0, buffer.Offset(26*16))
+
+	Comment("10=10^2^8^16^24")
+	MOVOU(X9, X4)
+	PXOR(b.Offset(10*16), X4)
+	PXOR(X1, X4)
+	PXOR(X2, X4)
+	PXOR(X3, X4)
+	MOVOU(X4, buffer.Offset(10*16))
+
+	MOVOU(b.Offset(6*16), X0)
+	MOVOU(b.Offset(14*16), X5)
+	Comment("16=16^8^30^6^14")
+	PXOR(X2, X1)
+	PXOR(X8, X1)
+	PXOR(X0, X1)
+	PXOR(X5, X1)
+	MOVOU(X1, buffer.Offset(16*16))
+
+	Comment("24=24^16^6^14^22")
+	PXOR(X3, X2)
+	PXOR(X0, X2)
+	PXOR(X5, X2)
+	PXOR(X6, X2)
+	MOVOU(X2, buffer.Offset(24*16))
+
+	MOVOU(b.Offset(4*16), X1)
+	MOVOU(b.Offset(10*16), X2)
+	MOVOU(b.Offset(12*16), X3)
+	// X0=6, X1=4, X9=X4=2, X2=10, X3=12, X5=14, X6=22, X7=26, X8=30
+	Comment("4=4^28^2^10^18")
+	MOVOU(X9, X4)
+	PXOR(X1, X4)
+	PXOR(X2, X4)
+	PXOR(b.Offset(18*16), X4)
+	PXOR(b.Offset(28*16), X4)
+	MOVOU(X4, buffer.Offset(4*16))
+
+	Comment("20=20^12^18^26^2")
+	MOVOU(X9, X4)
+	PXOR(b.Offset(20*16), X4)
+	PXOR(X3, X4)
+	PXOR(b.Offset(18*16), X4)
+	PXOR(X7, X4)
+	MOVOU(X4, buffer.Offset(20*16))
+
+	Comment("28=28^20^26^2^10")
+	PXOR(b.Offset(28*16), X9)
+	PXOR(b.Offset(20*16), X9)
+	PXOR(X7, X9)
+	PXOR(X2, X9)
+	MOVOU(X9, buffer.Offset(28*16))
+
+	MOVOU(b.Offset(20*16), X9)
+	// X0=6, X1=4, X9=20, X2=10, X3=12, X5=14, X6=22, X7=26, X8=30
+
+	Comment("6=6^30^4^12^20")
+	MOVOU(X1, X4)
+	PXOR(X0, X4)
+	PXOR(X3, X4)
+	PXOR(X8, X4)
+	PXOR(X9, X4)
+	MOVOU(X4, buffer.Offset(6*16))
+
+	Comment("12=12^4^10^18^26")
+	MOVOU(X1, X4)
+	PXOR(X3, X4)
+	PXOR(X2, X4)
+	PXOR(b.Offset(18*16), X4)
+	PXOR(X7, X4)
+	MOVOU(X4, buffer.Offset(12*16))
+
+	MOVOU(b.Offset(28*16), X7)
+	// X0=6, X1=4, X9=20, X2=10, X3=12, X5=14, X6=22, X7=28, X8=30
+	Comment("22=22^14^20^28^4")
+	MOVOU(X1, X4)
+	PXOR(X5, X4)
+	PXOR(X6, X4)
+	PXOR(X9, X4)
+	PXOR(X7, X4)
+	MOVOU(X4, buffer.Offset(22*16))
+
+	Comment("30=30^22^28^4^12")
+	PXOR(X8, X1)
+	PXOR(X6, X1)
+	PXOR(X3, X1)
+	PXOR(X7, X1)
+	MOVOU(X1, buffer.Offset(30*16))
+
+	Comment("14=14^6^12^20^28")
+	PXOR(X3, X0)
+	PXOR(X7, X0)
+	PXOR(X9, X0)
+	PXOR(X5, X0)
+	MOVOU(X0, buffer.Offset(14*16))
+
+	MOVOU(b.Offset(1*16), X0)
+	MOVOU(b.Offset(9*16), X1)
+	MOVOU(b.Offset(17*16), X2)
+	MOVOU(b.Offset(25*16), X3)
+	MOVOU(b.Offset(19*16), X5)
+	MOVOU(b.Offset(23*16), X6)
+	MOVOU(b.Offset(27*16), X7)
+	MOVOU(b.Offset(31*16), X8)
+	MOVOU(b.Offset(3*16), X9)
+
+	Comment("1=1^25^15^23^31")
+	MOVOU(X0, X4)
+	PXOR(X3, X4)
+	PXOR(b.Offset(15*16), X4)
+	PXOR(X6, X4)
+	PXOR(X8, X4)
+	MOVOU(X4, buffer.Offset(1*16))
+
+	Comment("3=3^27^1^9^17")
+	MOVOU(X0, X4)
+	PXOR(X9, X4)
+	PXOR(X7, X4)
+	PXOR(X1, X4)
+	PXOR(X2, X4)
+	MOVOU(X4, buffer.Offset(3*16))
+
+	Comment("9=9^1^23^31^7")
+	MOVOU(X0, X4)
+	PXOR(X1, X4)
+	PXOR(X6, X4)
+	PXOR(X8, X4)
+	PXOR(b.Offset(7*16), X4)
+	MOVOU(X4, buffer.Offset(9*16))
+
+	Comment("19=1^19^11^17^25")
+	MOVOU(X0, X4)
+	PXOR(X5, X4)
+	PXOR(b.Offset(11*16), X4)
+	PXOR(X2, X4)
+	PXOR(X3, X4)
+	MOVOU(X4, buffer.Offset(19*16))
+
+	Comment("27=1^27^19^25^9")
+	PXOR(X1, X0)
+	PXOR(X7, X0)
+	PXOR(X5, X0)
+	PXOR(X3, X0)
+	MOVOU(X0, buffer.Offset(27*16))
+
+	Comment("11=11^3^9^17^25")
+	MOVOU(X9, X4)
+	PXOR(b.Offset(11*16), X4)
+	PXOR(X1, X4)
+	PXOR(X2, X4)
+	PXOR(X3, X4)
+	MOVOU(X4, buffer.Offset(11*16))
+
+	MOVOU(b.Offset(7*16), X0)
+	MOVOU(b.Offset(15*16), X5)
+	Comment("17=17^9^31^7^15")
+	PXOR(X2, X1)
+	PXOR(X8, X1)
+	PXOR(X0, X1)
+	PXOR(X5, X1)
+	MOVOU(X1, buffer.Offset(17*16))
+
+	Comment("25=25^17^7^15^23")
+	PXOR(X3, X2)
+	PXOR(X0, X2)
+	PXOR(X5, X2)
+	PXOR(X6, X2)
+	MOVOU(X2, buffer.Offset(25*16))
+
+	MOVOU(b.Offset(5*16), X1)
+	MOVOU(b.Offset(11*16), X2)
+	MOVOU(b.Offset(13*16), X3)
+	// X0=7, X1=5, X9=X4=3, X2=11, X3=13, X5=15, X6=23, X7=27, X8=31
+	Comment("5=5^29^3^11^19")
+	MOVOU(X9, X4)
+	PXOR(X1, X4)
+	PXOR(X2, X4)
+	PXOR(b.Offset(19*16), X4)
+	PXOR(b.Offset(29*16), X4)
+	MOVOU(X4, buffer.Offset(5*16))
+
+	Comment("21=21^13^19^27^3")
+	MOVOU(X9, X4)
+	PXOR(b.Offset(21*16), X4)
+	PXOR(X3, X4)
+	PXOR(b.Offset(19*16), X4)
+	PXOR(X7, X4)
+	MOVOU(X4, buffer.Offset(21*16))
+
+	Comment("29=29^21^27^3^11")
+	PXOR(b.Offset(29*16), X9)
+	PXOR(b.Offset(21*16), X9)
+	PXOR(X7, X9)
+	PXOR(X2, X9)
+	MOVOU(X9, buffer.Offset(29*16))
+
+	MOVOU(b.Offset(21*16), X9)
+	// X0=7, X1=5, X9=21, X2=11, X3=13, X5=15, X6=23, X7=27, X8=31
+
+	Comment("7=7^31^5^13^21")
+	MOVOU(X1, X4)
+	PXOR(X0, X4)
+	PXOR(X3, X4)
+	PXOR(X8, X4)
+	PXOR(X9, X4)
+	MOVOU(X4, buffer.Offset(7*16))
+
+	Comment("13=13^5^11^19^27")
+	MOVOU(X1, X4)
+	PXOR(X3, X4)
+	PXOR(X2, X4)
+	PXOR(b.Offset(19*16), X4)
+	PXOR(X7, X4)
+	MOVOU(X4, buffer.Offset(13*16))
+
+	MOVOU(b.Offset(29*16), X7)
+	// X0=7, X1=5, X9=21, X2=11, X3=13, X5=15, X6=23, X7=29, X8=31
+	Comment("23=23^15^21^29^5")
+	MOVOU(X1, X4)
+	PXOR(X5, X4)
+	PXOR(X6, X4)
+	PXOR(X9, X4)
+	PXOR(X7, X4)
+	MOVOU(X4, buffer.Offset(23*16))
+
+	Comment("31=31^23^29^5^13")
+	PXOR(X8, X1)
+	PXOR(X6, X1)
+	PXOR(X3, X1)
+	PXOR(X7, X1)
+	MOVOU(X1, buffer.Offset(31*16))
+
+	Comment("15=15^7^13^21^29")
+	PXOR(X3, X0)
+	PXOR(X7, X0)
+	PXOR(X9, X0)
+	PXOR(X5, X0)
+	MOVOU(X0, buffer.Offset(15*16))
 
 	RET()
 }
@@ -841,6 +1144,7 @@ func main() {
 	xor32x128()
 	xorRoundKey128()
 	sbox128()
+	l128()
 
 	Generate()
 }

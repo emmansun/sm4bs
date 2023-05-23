@@ -854,8 +854,8 @@ TEXT ·sbox128(SB), NOSPLIT, $0-16
 	// p1 = t8 ^ t15
 	PXOR X12, X5
 
-	// Start middle function
-	// Current register status: t8=p0, t3=p1, t4=p2, t7=p0
+	// start middle function
+	// current register status: t8=p0, t3=p1, t4=p2, t7=p0
 	// t1 = ^(p3 & p0)
 	MOVOU X4, X1
 	PAND  X3, X1
@@ -923,8 +923,8 @@ TEXT ·sbox128(SB), NOSPLIT, $0-16
 	PAND  X11, X3
 	PANDN X0, X3
 
-	// Start bottom function
-	// Current register status: t11=l0, t7=l1, t6=l2, t12=l3
+	// start bottom function
+	// current register status: t11=l0, t7=l1, t6=l2, t12=l3
 	// k4 = l2 ^ l3
 	MOVOU X7, X8
 	PXOR  X10, X8
@@ -949,7 +949,6 @@ TEXT ·sbox128(SB), NOSPLIT, $0-16
 	MOVOU 144(CX), X4
 	PAND  X1, X4
 	PANDN X0, X4
-	MOVOU X4, 352(CX)
 
 	// e1=^(g5 & l1)
 	MOVOU 80(CX), X11
@@ -967,7 +966,7 @@ TEXT ·sbox128(SB), NOSPLIT, $0-16
 	// r1=e2 ^ e1
 	PXOR X12, X11
 
-	// Store r0 r1
+	// store r0 r1
 	MOVOU X4, 352(CX)
 	MOVOU X11, 368(CX)
 
@@ -992,7 +991,7 @@ TEXT ·sbox128(SB), NOSPLIT, $0-16
 	// r3=e5 ^ e4
 	PXOR X12, X11
 
-	// Store r2 r3
+	// store r2 r3
 	MOVOU X4, 384(CX)
 	MOVOU X11, 400(CX)
 
@@ -1017,7 +1016,7 @@ TEXT ·sbox128(SB), NOSPLIT, $0-16
 	// r5=e8 ^ e6
 	PXOR X12, X11
 
-	// Store r4 r5
+	// store r4 r5
 	MOVOU X4, 416(CX)
 	MOVOU X11, 432(CX)
 
@@ -1042,7 +1041,7 @@ TEXT ·sbox128(SB), NOSPLIT, $0-16
 	// r7=e11 ^ e10
 	PXOR X12, X11
 
-	// Store r6 r7
+	// store r6 r7
 	MOVOU X4, 448(CX)
 	MOVOU X11, 464(CX)
 
@@ -1088,7 +1087,7 @@ TEXT ·sbox128(SB), NOSPLIT, $0-16
 	// r11=e17 ^ e16
 	PXOR X12, X11
 
-	// Start output function
+	// start output function
 	// [t1]=r7 ^ r9
 	MOVOU 464(CX), X1
 	PXOR  X1, X9
@@ -1119,13 +1118,13 @@ TEXT ·sbox128(SB), NOSPLIT, $0-16
 	// [t8]=[t1] ^ t4
 	PXOR X9, X6
 
-	// Store t8
+	// store t8
 	MOVOU X6, 80(AX)
 
 	// [t9]=[t1] ^ t6
 	PXOR X10, X9
 
-	// Store t9
+	// store t9
 	MOVOU X9, 32(AX)
 
 	// [t10]=r2 ^ t5
@@ -1134,39 +1133,322 @@ TEXT ·sbox128(SB), NOSPLIT, $0-16
 	// [t11]=r10 ^ r8
 	PXOR X4, X3
 
-	// Store t11
+	// store t11
 	MOVOU X3, 48(AX)
 
 	// [t12]=^(t3 ^ [t11])
 	PXOR  X5, X3
 	PANDN X0, X3
 
-	// Store t12
+	// store t12
 	MOVOU X3, 16(AX)
 
 	// [t13]=[t10] ^ [t12]
 	PXOR X3, X8
 
-	// Store t13
+	// store t13
 	MOVOU X8, 96(AX)
 
 	// [t14]=^(t3 ^ [t7])
 	PXOR  X5, X1
 	PANDN X0, X1
 
-	// Store t14
+	// store t14
 	MOVOU X1, 64(AX)
 
 	// [t16]=t6 ^ [t14]
 	PXOR X10, X1
 
-	// Store t16
+	// store t16
 	MOVOU X1, (AX)
 
 	// [t15]=^(r10 ^ r6)
 	PXOR  448(CX), X4
 	PANDN X0, X4
 
-	// Store t15
+	// store t15
 	MOVOU X4, 112(AX)
+	RET
+
+// func l128(x *byte, buffer *byte)
+// Requires: SSE2
+TEXT ·l128(SB), NOSPLIT, $0-16
+	MOVQ  x+0(FP), AX
+	MOVQ  buffer+8(FP), CX
+	MOVOU (AX), X0
+	MOVOU 128(AX), X1
+	MOVOU 256(AX), X2
+	MOVOU 384(AX), X3
+	MOVOU 288(AX), X5
+	MOVOU 352(AX), X6
+	MOVOU 416(AX), X7
+	MOVOU 480(AX), X8
+	MOVOU 32(AX), X9
+
+	// 0=0^24^14^22^30
+	MOVOU X0, X4
+	PXOR  X3, X4
+	PXOR  224(AX), X4
+	PXOR  X6, X4
+	PXOR  X8, X4
+	MOVOU X4, (CX)
+
+	// 2=0^2^26^8^16
+	MOVOU X0, X4
+	PXOR  X9, X4
+	PXOR  X7, X4
+	PXOR  X1, X4
+	PXOR  X2, X4
+	MOVOU X4, 32(CX)
+
+	// 8=0^8^22^30^6
+	MOVOU X0, X4
+	PXOR  X1, X4
+	PXOR  X6, X4
+	PXOR  X8, X4
+	PXOR  96(AX), X4
+	MOVOU X4, 128(CX)
+
+	// 18=0^18^10^16^24
+	MOVOU X0, X4
+	PXOR  X5, X4
+	PXOR  160(AX), X4
+	PXOR  X2, X4
+	PXOR  X3, X4
+	MOVOU X4, 288(CX)
+
+	// 26=0^26^18^24^8
+	PXOR  X1, X0
+	PXOR  X7, X0
+	PXOR  X5, X0
+	PXOR  X3, X0
+	MOVOU X0, 416(CX)
+
+	// 10=10^2^8^16^24
+	MOVOU X9, X4
+	PXOR  160(AX), X4
+	PXOR  X1, X4
+	PXOR  X2, X4
+	PXOR  X3, X4
+	MOVOU X4, 160(CX)
+	MOVOU 96(AX), X0
+	MOVOU 224(AX), X5
+
+	// 16=16^8^30^6^14
+	PXOR  X2, X1
+	PXOR  X8, X1
+	PXOR  X0, X1
+	PXOR  X5, X1
+	MOVOU X1, 256(CX)
+
+	// 24=24^16^6^14^22
+	PXOR  X3, X2
+	PXOR  X0, X2
+	PXOR  X5, X2
+	PXOR  X6, X2
+	MOVOU X2, 384(CX)
+	MOVOU 64(AX), X1
+	MOVOU 160(AX), X2
+	MOVOU 192(AX), X3
+
+	// 4=4^28^2^10^18
+	MOVOU X9, X4
+	PXOR  X1, X4
+	PXOR  X2, X4
+	PXOR  288(AX), X4
+	PXOR  448(AX), X4
+	MOVOU X4, 64(CX)
+
+	// 20=20^12^18^26^2
+	MOVOU X9, X4
+	PXOR  320(AX), X4
+	PXOR  X3, X4
+	PXOR  288(AX), X4
+	PXOR  X7, X4
+	MOVOU X4, 320(CX)
+
+	// 28=28^20^26^2^10
+	PXOR  448(AX), X9
+	PXOR  320(AX), X9
+	PXOR  X7, X9
+	PXOR  X2, X9
+	MOVOU X9, 448(CX)
+	MOVOU 320(AX), X9
+
+	// 6=6^30^4^12^20
+	MOVOU X1, X4
+	PXOR  X0, X4
+	PXOR  X3, X4
+	PXOR  X8, X4
+	PXOR  X9, X4
+	MOVOU X4, 96(CX)
+
+	// 12=12^4^10^18^26
+	MOVOU X1, X4
+	PXOR  X3, X4
+	PXOR  X2, X4
+	PXOR  288(AX), X4
+	PXOR  X7, X4
+	MOVOU X4, 192(CX)
+	MOVOU 448(AX), X7
+
+	// 22=22^14^20^28^4
+	MOVOU X1, X4
+	PXOR  X5, X4
+	PXOR  X6, X4
+	PXOR  X9, X4
+	PXOR  X7, X4
+	MOVOU X4, 352(CX)
+
+	// 30=30^22^28^4^12
+	PXOR  X8, X1
+	PXOR  X6, X1
+	PXOR  X3, X1
+	PXOR  X7, X1
+	MOVOU X1, 480(CX)
+
+	// 14=14^6^12^20^28
+	PXOR  X3, X0
+	PXOR  X7, X0
+	PXOR  X9, X0
+	PXOR  X5, X0
+	MOVOU X0, 224(CX)
+	MOVOU 16(AX), X0
+	MOVOU 144(AX), X1
+	MOVOU 272(AX), X2
+	MOVOU 400(AX), X3
+	MOVOU 304(AX), X5
+	MOVOU 368(AX), X6
+	MOVOU 432(AX), X7
+	MOVOU 496(AX), X8
+	MOVOU 48(AX), X9
+
+	// 1=1^25^15^23^31
+	MOVOU X0, X4
+	PXOR  X3, X4
+	PXOR  240(AX), X4
+	PXOR  X6, X4
+	PXOR  X8, X4
+	MOVOU X4, 16(CX)
+
+	// 3=3^27^1^9^17
+	MOVOU X0, X4
+	PXOR  X9, X4
+	PXOR  X7, X4
+	PXOR  X1, X4
+	PXOR  X2, X4
+	MOVOU X4, 48(CX)
+
+	// 9=9^1^23^31^7
+	MOVOU X0, X4
+	PXOR  X1, X4
+	PXOR  X6, X4
+	PXOR  X8, X4
+	PXOR  112(AX), X4
+	MOVOU X4, 144(CX)
+
+	// 19=1^19^11^17^25
+	MOVOU X0, X4
+	PXOR  X5, X4
+	PXOR  176(AX), X4
+	PXOR  X2, X4
+	PXOR  X3, X4
+	MOVOU X4, 304(CX)
+
+	// 27=1^27^19^25^9
+	PXOR  X1, X0
+	PXOR  X7, X0
+	PXOR  X5, X0
+	PXOR  X3, X0
+	MOVOU X0, 432(CX)
+
+	// 11=11^3^9^17^25
+	MOVOU X9, X4
+	PXOR  176(AX), X4
+	PXOR  X1, X4
+	PXOR  X2, X4
+	PXOR  X3, X4
+	MOVOU X4, 176(CX)
+	MOVOU 112(AX), X0
+	MOVOU 240(AX), X5
+
+	// 17=17^9^31^7^15
+	PXOR  X2, X1
+	PXOR  X8, X1
+	PXOR  X0, X1
+	PXOR  X5, X1
+	MOVOU X1, 272(CX)
+
+	// 25=25^17^7^15^23
+	PXOR  X3, X2
+	PXOR  X0, X2
+	PXOR  X5, X2
+	PXOR  X6, X2
+	MOVOU X2, 400(CX)
+	MOVOU 80(AX), X1
+	MOVOU 176(AX), X2
+	MOVOU 208(AX), X3
+
+	// 5=5^29^3^11^19
+	MOVOU X9, X4
+	PXOR  X1, X4
+	PXOR  X2, X4
+	PXOR  304(AX), X4
+	PXOR  464(AX), X4
+	MOVOU X4, 80(CX)
+
+	// 21=21^13^19^27^3
+	MOVOU X9, X4
+	PXOR  336(AX), X4
+	PXOR  X3, X4
+	PXOR  304(AX), X4
+	PXOR  X7, X4
+	MOVOU X4, 336(CX)
+
+	// 29=29^21^27^3^11
+	PXOR  464(AX), X9
+	PXOR  336(AX), X9
+	PXOR  X7, X9
+	PXOR  X2, X9
+	MOVOU X9, 464(CX)
+	MOVOU 336(AX), X9
+
+	// 7=7^31^5^13^21
+	MOVOU X1, X4
+	PXOR  X0, X4
+	PXOR  X3, X4
+	PXOR  X8, X4
+	PXOR  X9, X4
+	MOVOU X4, 112(CX)
+
+	// 13=13^5^11^19^27
+	MOVOU X1, X4
+	PXOR  X3, X4
+	PXOR  X2, X4
+	PXOR  304(AX), X4
+	PXOR  X7, X4
+	MOVOU X4, 208(CX)
+	MOVOU 464(AX), X7
+
+	// 23=23^15^21^29^5
+	MOVOU X1, X4
+	PXOR  X5, X4
+	PXOR  X6, X4
+	PXOR  X9, X4
+	PXOR  X7, X4
+	MOVOU X4, 368(CX)
+
+	// 31=31^23^29^5^13
+	PXOR  X8, X1
+	PXOR  X6, X1
+	PXOR  X3, X1
+	PXOR  X7, X1
+	MOVOU X1, 496(CX)
+
+	// 15=15^7^13^21^29
+	PXOR  X3, X0
+	PXOR  X7, X0
+	PXOR  X9, X0
+	PXOR  X5, X0
+	MOVOU X0, 240(CX)
 	RET
