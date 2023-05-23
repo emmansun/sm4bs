@@ -544,86 +544,88 @@ xor32_loop:
 	JL    xor32_loop
 	RET
 
-// func expandRoundKey128(x uint32, out *byte)
+// func xorRoundKey128(rk uint32, x1 *byte, x2 *byte, x3 *byte, out *byte)
 // Requires: SSE2
-TEXT ·expandRoundKey128(SB), NOSPLIT, $0-16
-	MOVL    x+0(FP), AX
-	MOVQ    out+8(FP), CX
-	PXOR    X0, X0
+TEXT ·xorRoundKey128(SB), NOSPLIT, $0-40
+	MOVL    rk+0(FP), AX
+	MOVQ    x1+8(FP), CX
+	MOVQ    x2+16(FP), DX
+	MOVQ    x3+24(FP), BX
+	MOVQ    out+32(FP), SI
 	PCMPEQB X1, X1
-	XORQ    BX, BX
+	XORQ    R8, R8
 
 	// Handle first byte
-	MOVL $0x01000000, DX
+	MOVL $0x01000000, DI
 
 rk_loop_1:
-	TESTL AX, DX
-	JNZ   rk_loop_1_1
-	MOVOU X0, (CX)(BX*1)
-	JMP   rk_loop_1_c
-
-rk_loop_1_1:
-	MOVOU X1, (CX)(BX*1)
+	MOVOU (CX)(R8*1), X0
+	PXOR  (DX)(R8*1), X0
+	PXOR  (BX)(R8*1), X0
+	TESTL AX, DI
+	JZ    rk_loop_1_c
+	PXOR  X1, X0
 
 rk_loop_1_c:
-	ROLL $0x01, DX
-	ADDQ $0x10, BX
-	CMPQ BX, $0x00000080
-	JL   rk_loop_1
+	MOVOU X0, (SI)(R8*1)
+	ROLL  $0x01, DI
+	ADDQ  $0x10, R8
+	CMPQ  R8, $0x00000080
+	JL    rk_loop_1
 
 	// Handle second byte
-	MOVL $0x00010000, DX
+	MOVL $0x00010000, DI
 
 rk_loop_2:
-	TESTL AX, DX
-	JNZ   rk_loop_2_1
-	MOVOU X0, (CX)(BX*1)
-	JMP   rk_loop_2_c
-
-rk_loop_2_1:
-	MOVOU X1, (CX)(BX*1)
+	MOVOU (CX)(R8*1), X0
+	PXOR  (DX)(R8*1), X0
+	PXOR  (BX)(R8*1), X0
+	TESTL AX, DI
+	JZ    rk_loop_2_c
+	PXOR  X1, X0
 
 rk_loop_2_c:
-	ROLL $0x01, DX
-	ADDQ $0x10, BX
-	CMPQ BX, $0x00000100
-	JL   rk_loop_2
+	MOVOU X0, (SI)(R8*1)
+	ROLL  $0x01, DI
+	ADDQ  $0x10, R8
+	CMPQ  R8, $0x00000100
+	JL    rk_loop_2
 
 	// Handle third byte
-	MOVL $0x00000100, DX
+	MOVL $0x00000100, DI
 
 rk_loop_3:
-	TESTL AX, DX
-	JNZ   rk_loop_3_1
-	MOVOU X0, (CX)(BX*1)
-	JMP   rk_loop_3_c
-
-rk_loop_3_1:
-	MOVOU X1, (CX)(BX*1)
+	MOVOU (CX)(R8*1), X0
+	PXOR  (DX)(R8*1), X0
+	PXOR  (BX)(R8*1), X0
+	TESTL AX, DI
+	JZ    rk_loop_3_c
+	PXOR  X1, X0
 
 rk_loop_3_c:
-	ROLL $0x01, DX
-	ADDQ $0x10, BX
-	CMPQ BX, $0x00000180
-	JL   rk_loop_3
+	MOVOU X0, (SI)(R8*1)
+	ROLL  $0x01, DI
+	ADDQ  $0x10, R8
+	CMPQ  R8, $0x00000180
+	JL    rk_loop_3
 
 	// Handle last byte
-	MOVL $0x00000001, DX
+	MOVL $0x00000001, DI
 
 rk_loop_4:
-	TESTL AX, DX
-	JNZ   rk_loop_4_1
-	MOVOU X0, (CX)(BX*1)
-	JMP   rk_loop_4_c
-
-rk_loop_4_1:
-	MOVOU X1, (CX)(BX*1)
+	MOVOU (CX)(R8*1), X0
+	PXOR  (DX)(R8*1), X0
+	PXOR  (BX)(R8*1), X0
+	TESTL AX, DI
+	JZ    rk_loop_4_c
+	PXOR  X1, X0
 
 rk_loop_4_c:
-	ROLL $0x01, DX
-	ADDQ $0x10, BX
-	CMPQ BX, $0x00000200
-	JL   rk_loop_4
+	MOVOU X0, (SI)(R8*1)
+	ROLL  $0x01, DI
+	ADDQ  $0x10, R8
+	CMPQ  R8, $0x00000200
+	JL    rk_loop_4
 	RET
 
 // func sbox128(x *byte, buffer *byte)

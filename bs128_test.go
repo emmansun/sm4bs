@@ -4,6 +4,7 @@ package sm4bs
 
 import (
 	"bytes"
+	"encoding/binary"
 	"math/bits"
 	"testing"
 )
@@ -21,6 +22,15 @@ func newByte128(b byte) []byte {
 		b = b >> 1
 	}
 	return ret
+}
+
+func newUint32x128(x uint32) []byte {
+	var bytes [4]byte
+	binary.BigEndian.PutUint32(bytes[:], x)
+	ret := newByte128(bytes[0])
+	ret = append(ret, newByte128(bytes[1])...)
+	ret = append(ret, newByte128(bytes[2])...)
+	return append(ret, newByte128(bytes[3])...)
 }
 
 func TestSbox(t *testing.T) {
@@ -85,11 +95,10 @@ func BenchmarkTao128(b *testing.B) {
 
 func TestRotateLeft32_2(t *testing.T) {
 	x := make([]byte, 32*BS128.bytes())
-	expected := make([]byte, 32*BS128.bytes())
 	expected1 := make([]byte, 32*BS128.bytes())
 	buffer := make([]byte, 32*BS128.bytes())
 	b := bits.RotateLeft32(0x00010203, 2)
-	BS128.roundKey(b, expected)
+	expected := newUint32x128(b)
 
 	copy(expected1, newByte128(byte(0)))
 	copy(expected1[8*BS128.bytes():], newByte128(byte(4)))
@@ -126,10 +135,9 @@ func BenchmarkRotateLeft32_2(b *testing.B) {
 
 func TestRotateLeft32_10(t *testing.T) {
 	x := make([]byte, 32*BS128.bytes())
-	expected := make([]byte, 32*BS128.bytes())
 	buffer := make([]byte, 64*BS128.bytes())
 	b := bits.RotateLeft32(0x00010203, 10)
-	BS128.roundKey(b, expected)
+	expected := newUint32x128(b)
 
 	copy(x, newByte128(byte(0)))
 	copy(x[8*BS128.bytes():], newByte128(byte(1)))
@@ -146,10 +154,9 @@ func TestRotateLeft32_10(t *testing.T) {
 
 func TestRotateLeft32_18(t *testing.T) {
 	x := make([]byte, 32*BS128.bytes())
-	expected := make([]byte, 32*BS128.bytes())
 	buffer := make([]byte, 32*BS128.bytes())
 	b := bits.RotateLeft32(0x00010203, 18)
-	BS128.roundKey(b, expected)
+	expected := newUint32x128(b)
 
 	copy(x, newByte128(byte(0)))
 	copy(x[8*BS128.bytes():], newByte128(byte(1)))
@@ -183,10 +190,9 @@ func BenchmarkRotateLeft32_24(b *testing.B) {
 
 func TestL128(t *testing.T) {
 	x := make([]byte, 32*BS128.bytes())
-	expected := make([]byte, 32*BS128.bytes())
 	buffer := make([]byte, 64*BS128.bytes())
 	b := 0x00010203 ^ bits.RotateLeft32(0x00010203, 2) ^ bits.RotateLeft32(0x00010203, 10) ^ bits.RotateLeft32(0x00010203, 18) ^ bits.RotateLeft32(0x00010203, 24)
-	BS128.roundKey(b, expected)
+	expected := newUint32x128(b)
 
 	copy(x, newByte128(byte(0)))
 	copy(x[8*BS128.bytes():], newByte128(byte(1)))

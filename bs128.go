@@ -24,17 +24,16 @@ func (bs bs128) xor32(x1, x2 []byte) []byte {
 	return x1
 }
 
-func (bs bs128) xorRK(rk, x1, x2, x3 []byte) []byte {
-	xor32x128(&rk[0], &x1[0], &rk[0])
-	xor32x128(&rk[0], &x2[0], &rk[0])
-	xor32x128(&rk[0], &x3[0], &rk[0])
+func (bs bs128) xorRK(k uint32, rk, x1, x2, x3 []byte) []byte {
+	xorRoundKey128(k, &x1[0], &x2[0], &x3[0], &rk[0])
 	return rk
 }
 
+/*
 func (bs bs128) roundKey(in uint32, out []byte) {
 	expandRoundKey128(in, &out[0])
 }
-
+*/
 // 24 25 26 27 28 29 30 31 | 16 17 18 19 20 21 22 23 |  8  9 10 11 12 13 14 15 |  0  1  2  3  4  5  6  7
 // 22 23 24 25 26 27 28 29 | 14 15 16 17 18 19 20 21 |  6  7  8  9 10 11 12 13 | 30 31  0  1  2  3  4  5
 func (bs bs128) rotateLeft32_2(x, ret []byte) []byte {
@@ -112,14 +111,10 @@ func (bs bs128) EncryptBlocks(xk []uint32, dst, src []byte) {
 	rk := make([]byte, 32*bitSize)
 	buffer := make([]byte, 64*bitSize)
 	for i := 0; i < 8; i++ {
-		bs.roundKey(xk[i*4], rk)
-		b0 = bs.xor32(b0, bs.l(bs.tao(bs.xorRK(rk, b1, b2, b3), buffer), buffer))
-		bs.roundKey(xk[i*4+1], rk)
-		b1 = bs.xor32(b1, bs.l(bs.tao(bs.xorRK(rk, b2, b3, b0), buffer), buffer))
-		bs.roundKey(xk[i*4+2], rk)
-		b2 = bs.xor32(b2, bs.l(bs.tao(bs.xorRK(rk, b3, b0, b1), buffer), buffer))
-		bs.roundKey(xk[i*4+3], rk)
-		b3 = bs.xor32(b3, bs.l(bs.tao(bs.xorRK(rk, b0, b1, b2), buffer), buffer))
+		b0 = bs.xor32(b0, bs.l(bs.tao(bs.xorRK(xk[i*4], rk, b1, b2, b3), buffer), buffer))
+		b1 = bs.xor32(b1, bs.l(bs.tao(bs.xorRK(xk[i*4+1], rk, b2, b3, b0), buffer), buffer))
+		b2 = bs.xor32(b2, bs.l(bs.tao(bs.xorRK(xk[i*4+2], rk, b3, b0, b1), buffer), buffer))
+		b3 = bs.xor32(b3, bs.l(bs.tao(bs.xorRK(xk[i*4+3], rk, b0, b1, b2), buffer), buffer))
 	}
 	copy(rk, b0)
 	copy(state[:], b3)
