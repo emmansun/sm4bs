@@ -95,7 +95,7 @@ func BenchmarkTao128(b *testing.B) {
 
 func TestL128(t *testing.T) {
 	x := make([]byte, 32*BS128.bytes())
-	buffer := make([]byte, 64*BS128.bytes())
+	buffer := make([]byte, 32*BS128.bytes())
 	b := 0x00010203 ^ bits.RotateLeft32(0x00010203, 2) ^ bits.RotateLeft32(0x00010203, 10) ^ bits.RotateLeft32(0x00010203, 18) ^ bits.RotateLeft32(0x00010203, 24)
 	expected := newUint32x128(b)
 
@@ -107,7 +107,7 @@ func TestL128(t *testing.T) {
 	ret := BS128.l(x, buffer)
 
 	if !bytes.Equal(ret, expected) {
-		t.Fatalf("unexpected rotateLeft32_2 result, expected %x, got %x", expected, ret)
+		t.Fatalf("unexpected l128 result, expected %x, got %x", expected, ret)
 	}
 }
 
