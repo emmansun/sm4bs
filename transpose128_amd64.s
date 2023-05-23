@@ -544,6 +544,25 @@ xor32_loop:
 	JL    xor32_loop
 	RET
 
+// func xor32x128avx(x *byte, y *byte, out *byte)
+// Requires: AVX, AVX2
+TEXT ·xor32x128avx(SB), NOSPLIT, $0-24
+	MOVQ x+0(FP), AX
+	MOVQ y+8(FP), CX
+	MOVQ out+16(FP), DX
+	XORQ BX, BX
+
+xor32_loop_avx:
+	VMOVDQU (AX)(BX*1), Y0
+	VMOVDQU (CX)(BX*1), Y1
+	VPXOR   Y0, Y1, Y1
+	VMOVDQU Y1, (DX)(BX*1)
+	ADDQ    $0x20, BX
+	CMPQ    BX, $0x00000200
+	JL      xor32_loop_avx
+	VZEROUPPER
+	RET
+
 // func xorRoundKey128(rk uint32, x1 *byte, x2 *byte, x3 *byte, out *byte)
 // Requires: SSE2
 TEXT ·xorRoundKey128(SB), NOSPLIT, $0-40

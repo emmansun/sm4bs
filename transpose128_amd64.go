@@ -16,6 +16,9 @@ func transpose128(in *byte, out *byte)
 // out = x xor y
 func xor32x128(x *byte, y *byte, out *byte)
 
+// out = x xor y
+func xor32x128avx(x *byte, y *byte, out *byte)
+
 // xor x1, x2, x3 with round key, 16 bytes per bit
 func xorRoundKey128(rk uint32, x1 *byte, x2 *byte, x3 *byte, out *byte)
 

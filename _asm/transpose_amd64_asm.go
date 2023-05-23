@@ -227,6 +227,31 @@ func xor32x128() {
 	RET()
 }
 
+func xor32x128avx() {
+	// xor32x128 function
+	TEXT("xor32x128avx", NOSPLIT, "func(x, y, out *byte)")
+	Doc("out = x xor y")
+	x := Mem{Base: Load(Param("x"), GP64())}
+	y := Mem{Base: Load(Param("y"), GP64())}
+	out := Mem{Base: Load(Param("out"), GP64())}
+
+	X := YMM()
+	Y := YMM()
+
+	count := zero()
+	Label("xor32_loop_avx")
+	VMOVDQU(x.Idx(count, 1), X)
+	VMOVDQU(y.Idx(count, 1), Y)
+	VPXOR(X, Y, Y)
+	VMOVDQU(Y, out.Idx(count, 1))
+	ADDQ(U8(32), count)
+	CMPQ(count, U32(512))
+	JL(LabelRef("xor32_loop_avx"))
+
+	VZEROUPPER()
+	RET()
+}
+
 func xorRoundKey128() {
 	// xorRoundKey128 function
 	TEXT("xorRoundKey128", NOSPLIT, "func(rk uint32, x1, x2, x3, out *byte)")
@@ -1142,6 +1167,7 @@ func main() {
 	transpose64Rev()
 	transpose128()
 	xor32x128()
+	xor32x128avx()
 	xorRoundKey128()
 	sbox128()
 	l128()
