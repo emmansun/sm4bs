@@ -168,7 +168,7 @@ func BenchmarkEncrypt128Blocks(b *testing.B) {
 	}
 
 	expandKey(key, enc, dec)
-	b.SetBytes(int64(bitSize * 8 * BlockSize))
+	b.SetBytes(int64(bitSize * BlockSize))
 
 	b.ReportAllocs()
 	b.ResetTimer()
