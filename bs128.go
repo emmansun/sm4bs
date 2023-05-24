@@ -56,11 +56,5 @@ func (bs bs128) EncryptBlocks(xk []uint32, dst, src []byte) {
 		b2 = bs.xor32(b2, bs.l(bs.tao(bs.xorRK(xk[i*4+2], rk, b3, b0, b1), buffer), buffer))
 		b3 = bs.xor32(b3, bs.l(bs.tao(bs.xorRK(xk[i*4+3], rk, b0, b1, b2), buffer), buffer))
 	}
-	copy(rk, b0)
-	copy(state[:], b3)
-	copy(state[96*bitSize:], rk)
-	copy(rk, b1)
-	copy(state[32*bitSize:], b2)
-	copy(state[64*bitSize:], rk)
-	transpose128(&state[0], &dst[0])
+	transpose128Rev(&state[0], &dst[0])
 }

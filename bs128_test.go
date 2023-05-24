@@ -127,6 +127,25 @@ func BenchmarkL128(b *testing.B) {
 	}
 }
 
+func BenchmarkXorRK(b *testing.B) {
+	b0 := make([]byte, 32*BS128.bytes())
+	b1 := make([]byte, 32*BS128.bytes())
+	b2 := make([]byte, 32*BS128.bytes())
+	rk := make([]byte, 32*BS128.bytes())
+	k := uint32(0xa3b1bac6)
+	for i := 0; i < b.N; i++ {
+		BS128.xorRK(k, rk, b0, b1, b2)
+	}
+}
+
+func BenchmarkXor32(b *testing.B) {
+	b0 := make([]byte, 32*BS128.bytes())
+	b1 := make([]byte, 32*BS128.bytes())
+	for i := 0; i < b.N; i++ {
+		BS128.xor32(b0, b1)
+	}
+}
+
 func TestBS128EncryptBlocks(t *testing.T) {
 	bitSize := BS128.bytes()
 	key := []byte{0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10}

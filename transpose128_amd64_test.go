@@ -70,3 +70,18 @@ func BenchmarkBS128Transpose(b *testing.B) {
 		transpose128(&input[0], &out[0])
 	}
 }
+
+func BenchmarkBS128TransposeRev(b *testing.B) {
+	key := []byte{0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10}
+	input := make([]byte, 128*16)
+	for i := 0; i < 128; i++ {
+		copy(input[i*16:], key)
+	}
+	out := make([]byte, 128*16)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		transpose128Rev(&input[0], &out[0])
+	}
+}
