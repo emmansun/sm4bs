@@ -204,6 +204,83 @@ func transpose128() {
 	RET()
 }
 
+func transpose128avx() {
+	// transpose128avx function
+	TEXT("transpose128avx", NOSPLIT, "func(in, out *byte)")
+	Doc("Bit level matrix transpose, 128x128")
+
+	in := Mem{Base: Load(Param("in"), GP64())}
+	out := Mem{Base: Load(Param("out"), GP64())}
+
+	h, l := X1, X0
+	tmp := Y0
+	b := GP8()
+	o := GP32()
+	cc := GP64()
+
+	Comment("Initialize rr, current row")
+	rr := zero()
+	Label("row_loop")
+	Comment("Initialize cc, current col")
+	XORQ(cc, cc)
+	Label("col_loop")
+
+	Comment("Initialize (rr * ncols + cc) / 8, here ncols=128")
+	addr := GP64()
+	MOVQ(rr, addr)
+	Comment("Multiple with ncols")
+	SHLQ(Imm(7), addr)
+	ADDQ(cc, addr)
+	SHRQ(Imm(3), addr)
+
+	Comment("Construct one XMM with first byte of first 16 rows")
+	for i := 0; i < 16; i++ {
+		MOVB(in.Idx(addr, 1), b)
+		PINSRB(Imm(uint64(i)), b.As32(), l)
+		Comment("Add ncols / 8")
+		ADDQ(Imm(16), addr)
+	}
+
+	Comment("Construct another XMM with first byte of second 16 rows")
+	for i := 0; i < 16; i++ {
+		MOVB(in.Idx(addr, 1), b)
+		PINSRB(Imm(uint64(i)), b.As32(), h)
+		Comment("Add ncols / 8")
+		ADDQ(Imm(16), addr)
+	}
+
+	VINSERTI128(Imm(1), h, tmp, tmp)
+
+	Comment("Initialize ((cc + 7) * nrows + rr) / 8, here nrows = 128")
+	MOVQ(cc, addr)
+	ADDQ(Imm(7), addr)
+	Comment("Multiple with nrows")
+	SHLQ(Imm(7), addr)
+	ADDQ(rr, addr)
+	SHRQ(Imm(3), addr)
+
+	Comment("Get the most significant bit of each 8-bit element in the YMM, and store the returned 4 bytes")
+	for i := 7; i >= 0; i-- {
+		VPMOVMSKB(tmp, o)
+		MOVL(o, out.Idx(addr, 1))
+		VPSLLQ(Imm(1), tmp, tmp)
+		Comment("Sub nrows / 8")
+		SUBQ(Imm(16), addr)
+	}
+
+	Comment("Compare cc with ncols, here ncols=128")
+	ADDQ(Imm(8), cc)
+	CMPQ(cc, Imm(128))
+	JL(LabelRef("col_loop"))
+
+	Comment("Compare rr with nrows, here nrows=128")
+	ADDQ(Imm(32), rr)
+	CMPQ(rr, U8(128))
+	JL(LabelRef("row_loop"))
+
+	RET()
+}
+
 func transpose128Rev() {
 	// transpose128Rev function
 	TEXT("transpose128Rev", NOSPLIT, "func(in, out *byte)")
@@ -408,6 +485,219 @@ func transpose128Rev() {
 	ADDQ(Imm(16), rr)
 	CMPQ(rr, U8(128))
 	JL(LabelRef("row_loop_b0"))
+
+	RET()
+}
+
+func transpose128RevAvx() {
+	// transpose128RevAvx function
+	TEXT("transpose128RevAvx", NOSPLIT, "func(in, out *byte)")
+	Doc("Bit level matrix transpose, b0-b1-b2-b3, 128x128")
+
+	in := Mem{Base: Load(Param("in"), GP64())}
+	out := Mem{Base: Load(Param("out"), GP64())}
+
+	h, l := X1, X0
+	tmp := Y0
+	b := GP8()
+	o := GP32()
+
+	Comment("Initialize rr, current row, 96")
+	rr := zero()
+	cc := GP64()
+	addr := GP64()
+
+	Label("row_loop_b3")
+	Comment("Initialize cc, current col")
+	XORQ(cc, cc)
+	Label("col_loop_b3")
+	Comment("Initialize (rr * ncols + cc) / 8, here ncols=128")
+	MOVQ(U32(12288), addr)
+	ADDQ(cc, addr)
+	SHRQ(Imm(3), addr)
+
+	Comment("Construct one XMM with first byte of first 16 rows")
+	for i := 0; i < 16; i++ {
+		MOVB(in.Idx(addr, 1), b)
+		PINSRB(Imm(uint64(i)), b.As32(), l)
+		Comment("Add ncols / 8")
+		ADDQ(Imm(16), addr)
+	}
+
+	Comment("Construct another XMM with first byte of second 16 rows")
+	for i := 0; i < 16; i++ {
+		MOVB(in.Idx(addr, 1), b)
+		PINSRB(Imm(uint64(i)), b.As32(), h)
+		Comment("Add ncols / 8")
+		ADDQ(Imm(16), addr)
+	}
+
+	VINSERTI128(Imm(1), h, tmp, tmp)
+
+	Comment("Initialize ((cc + 7) * nrows + rr) / 8, here nrows = 128")
+	MOVQ(cc, addr)
+	ADDQ(Imm(7), addr)
+	SHLQ(Imm(4), addr)
+
+	Comment("Get the most significant bit of each 8-bit element in the YMM, and store the returned 4 bytes")
+	for i := 7; i >= 0; i-- {
+		VPMOVMSKB(tmp, o)
+		MOVL(o, out.Idx(addr, 1))
+		VPSLLQ(Imm(1), tmp, tmp)
+		Comment("Sub nrows / 8")
+		SUBQ(Imm(16), addr)
+	}
+
+	Comment("Compare cc with ncols, here ncols=128")
+	ADDQ(Imm(8), cc)
+	CMPQ(cc, Imm(128))
+	JL(LabelRef("col_loop_b3"))
+
+	ADDQ(Imm(32), rr)
+
+	Label("row_loop_b2")
+	Comment("Initialize cc, current col")
+	XORQ(cc, cc)
+	Label("col_loop_b2")
+	Comment("Initialize (rr * ncols + cc) / 8, here ncols=128")
+	MOVQ(U32(8192), addr)
+	ADDQ(cc, addr)
+	SHRQ(Imm(3), addr)
+
+	Comment("Construct one XMM with first byte of first 16 rows")
+	for i := 0; i < 16; i++ {
+		MOVB(in.Idx(addr, 1), b)
+		PINSRB(Imm(uint64(i)), b.As32(), l)
+		Comment("Add ncols / 8")
+		ADDQ(Imm(16), addr)
+	}
+
+	Comment("Construct another XMM with first byte of second 16 rows")
+	for i := 0; i < 16; i++ {
+		MOVB(in.Idx(addr, 1), b)
+		PINSRB(Imm(uint64(i)), b.As32(), h)
+		Comment("Add ncols / 8")
+		ADDQ(Imm(16), addr)
+	}
+
+	VINSERTI128(Imm(1), h, tmp, tmp)
+
+	Comment("Initialize ((cc + 7) * nrows + rr) / 8, here nrows = 128")
+	MOVQ(cc, addr)
+	ADDQ(Imm(7), addr)
+	SHLQ(Imm(4), addr)
+	ADDQ(Imm(4), addr)
+
+	Comment("Get the most significant bit of each 8-bit element in the YMM, and store the returned 4 bytes")
+	for i := 7; i >= 0; i-- {
+		VPMOVMSKB(tmp, o)
+		MOVL(o, out.Idx(addr, 1))
+		VPSLLQ(Imm(1), tmp, tmp)
+		Comment("Sub nrows / 8")
+		SUBQ(Imm(16), addr)
+	}
+
+	Comment("Compare cc with ncols, here ncols=128")
+	ADDQ(Imm(8), cc)
+	CMPQ(cc, Imm(128))
+	JL(LabelRef("col_loop_b2"))
+
+	ADDQ(Imm(32), rr)
+
+	Label("row_loop_b1")
+	Comment("Initialize cc, current col")
+	XORQ(cc, cc)
+	Label("col_loop_b1")
+	Comment("Initialize (rr * ncols + cc) / 8, here ncols=128")
+	MOVQ(U32(4096), addr)
+	ADDQ(cc, addr)
+	SHRQ(Imm(3), addr)
+
+	Comment("Construct one XMM with first byte of first 16 rows")
+	for i := 0; i < 16; i++ {
+		MOVB(in.Idx(addr, 1), b)
+		PINSRB(Imm(uint64(i)), b.As32(), l)
+		Comment("Add ncols / 8")
+		ADDQ(Imm(16), addr)
+	}
+
+	Comment("Construct another XMM with first byte of second 16 rows")
+	for i := 0; i < 16; i++ {
+		MOVB(in.Idx(addr, 1), b)
+		PINSRB(Imm(uint64(i)), b.As32(), h)
+		Comment("Add ncols / 8")
+		ADDQ(Imm(16), addr)
+	}
+
+	VINSERTI128(Imm(1), h, tmp, tmp)
+
+	Comment("Initialize ((cc + 7) * nrows + rr) / 8, here nrows = 128")
+	MOVQ(cc, addr)
+	ADDQ(Imm(7), addr)
+	SHLQ(Imm(4), addr)
+	ADDQ(Imm(8), addr)
+
+	Comment("Get the most significant bit of each 8-bit element in the YMM, and store the returned 4 bytes")
+	for i := 7; i >= 0; i-- {
+		VPMOVMSKB(tmp, o)
+		MOVL(o, out.Idx(addr, 1))
+		VPSLLQ(Imm(1), tmp, tmp)
+		Comment("Sub nrows / 8")
+		SUBQ(Imm(16), addr)
+	}
+
+	Comment("Compare cc with ncols, here ncols=128")
+	ADDQ(Imm(8), cc)
+	CMPQ(cc, Imm(128))
+	JL(LabelRef("col_loop_b1"))
+
+	ADDQ(Imm(32), rr)
+
+	Label("row_loop_b0")
+	Comment("Initialize cc, current col")
+	XORQ(cc, cc)
+	Label("col_loop_b0")
+	Comment("Initialize (rr * ncols + cc) / 8, here ncols=128")
+	MOVQ(cc, addr)
+	SHRQ(Imm(3), addr)
+
+	Comment("Construct one XMM with first byte of first 16 rows")
+	for i := 0; i < 16; i++ {
+		MOVB(in.Idx(addr, 1), b)
+		PINSRB(Imm(uint64(i)), b.As32(), l)
+		Comment("Add ncols / 8")
+		ADDQ(Imm(16), addr)
+	}
+
+	Comment("Construct another XMM with first byte of second 16 rows")
+	for i := 0; i < 16; i++ {
+		MOVB(in.Idx(addr, 1), b)
+		PINSRB(Imm(uint64(i)), b.As32(), h)
+		Comment("Add ncols / 8")
+		ADDQ(Imm(16), addr)
+	}
+
+	VINSERTI128(Imm(1), h, tmp, tmp)
+
+	Comment("Initialize ((cc + 7) * nrows + rr) / 8, here nrows = 128")
+	MOVQ(cc, addr)
+	ADDQ(Imm(7), addr)
+	SHLQ(Imm(4), addr)
+	ADDQ(Imm(12), addr)
+
+	Comment("Get the most significant bit of each 8-bit element in the YMM, and store the returned 4 bytes")
+	for i := 7; i >= 0; i-- {
+		VPMOVMSKB(tmp, o)
+		MOVL(o, out.Idx(addr, 1))
+		VPSLLQ(Imm(1), tmp, tmp)
+		Comment("Sub nrows / 8")
+		SUBQ(Imm(16), addr)
+	}
+
+	Comment("Compare cc with ncols, here ncols=128")
+	ADDQ(Imm(8), cc)
+	CMPQ(cc, Imm(128))
+	JL(LabelRef("col_loop_b0"))
 
 	RET()
 }
@@ -1375,6 +1665,8 @@ func main() {
 	transpose64Rev()
 	transpose128()
 	transpose128Rev()
+	transpose128avx()
+	transpose128RevAvx()
 	xor32x128()
 	xor32x128avx()
 	xorRoundKey128()

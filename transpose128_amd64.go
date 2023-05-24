@@ -16,6 +16,12 @@ func transpose128(in *byte, out *byte)
 // Bit level matrix transpose, b0-b1-b2-b3, 128x128
 func transpose128Rev(in *byte, out *byte)
 
+// Bit level matrix transpose, 128x128
+func transpose128avx(in *byte, out *byte)
+
+// Bit level matrix transpose, b0-b1-b2-b3, 128x128
+func transpose128RevAvx(in *byte, out *byte)
+
 // out = x xor y
 func xor32x128(x *byte, y *byte, out *byte)
 

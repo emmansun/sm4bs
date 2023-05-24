@@ -1196,6 +1196,1214 @@ col_loop_b0:
 	JL   row_loop_b0
 	RET
 
+// func transpose128avx(in *byte, out *byte)
+// Requires: AVX2, SSE4.1
+TEXT ·transpose128avx(SB), NOSPLIT, $0-16
+	MOVQ in+0(FP), AX
+	MOVQ out+8(FP), CX
+
+	// Initialize rr, current row
+	XORQ DI, DI
+
+row_loop:
+	// Initialize cc, current col
+	XORQ SI, SI
+
+col_loop:
+	// Initialize (rr * ncols + cc) / 8, here ncols=128
+	MOVQ DI, R8
+
+	// Multiple with ncols
+	SHLQ $0x07, R8
+	ADDQ SI, R8
+	SHRQ $0x03, R8
+
+	// Construct one XMM with first byte of first 16 rows
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x00, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x01, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x02, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x03, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x04, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x05, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x06, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x07, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x08, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x09, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0a, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0b, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0c, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0d, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0e, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0f, DX, X0
+
+	// Add ncols / 8
+	ADDQ $0x10, R8
+
+	// Construct another XMM with first byte of second 16 rows
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x00, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x01, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x02, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x03, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x04, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x05, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x06, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x07, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x08, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x09, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0a, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0b, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0c, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0d, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0e, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0f, DX, X1
+
+	// Add ncols / 8
+	ADDQ        $0x10, R8
+	VINSERTI128 $0x01, X1, Y0, Y0
+
+	// Initialize ((cc + 7) * nrows + rr) / 8, here nrows = 128
+	MOVQ SI, R8
+	ADDQ $0x07, R8
+
+	// Multiple with nrows
+	SHLQ $0x07, R8
+	ADDQ DI, R8
+	SHRQ $0x03, R8
+
+	// Get the most significant bit of each 8-bit element in the YMM, and store the returned 4 bytes
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ $0x10, R8
+
+	// Compare cc with ncols, here ncols=128
+	ADDQ $0x08, SI
+	CMPQ SI, $0x80
+	JL   col_loop
+
+	// Compare rr with nrows, here nrows=128
+	ADDQ $0x20, DI
+	CMPQ DI, $0x80
+	JL   row_loop
+	RET
+
+// func transpose128RevAvx(in *byte, out *byte)
+// Requires: AVX2, SSE4.1
+TEXT ·transpose128RevAvx(SB), NOSPLIT, $0-16
+	MOVQ in+0(FP), AX
+	MOVQ out+8(FP), CX
+
+	// Initialize rr, current row, 96
+	XORQ SI, SI
+
+	// Initialize cc, current col
+	XORQ DI, DI
+
+col_loop_b3:
+	// Initialize (rr * ncols + cc) / 8, here ncols=128
+	MOVQ $0x00003000, R8
+	ADDQ DI, R8
+	SHRQ $0x03, R8
+
+	// Construct one XMM with first byte of first 16 rows
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x00, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x01, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x02, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x03, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x04, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x05, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x06, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x07, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x08, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x09, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0a, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0b, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0c, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0d, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0e, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0f, DX, X0
+
+	// Add ncols / 8
+	ADDQ $0x10, R8
+
+	// Construct another XMM with first byte of second 16 rows
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x00, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x01, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x02, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x03, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x04, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x05, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x06, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x07, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x08, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x09, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0a, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0b, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0c, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0d, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0e, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0f, DX, X1
+
+	// Add ncols / 8
+	ADDQ        $0x10, R8
+	VINSERTI128 $0x01, X1, Y0, Y0
+
+	// Initialize ((cc + 7) * nrows + rr) / 8, here nrows = 128
+	MOVQ DI, R8
+	ADDQ $0x07, R8
+	SHLQ $0x04, R8
+
+	// Get the most significant bit of each 8-bit element in the YMM, and store the returned 4 bytes
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ $0x10, R8
+
+	// Compare cc with ncols, here ncols=128
+	ADDQ $0x08, DI
+	CMPQ DI, $0x80
+	JL   col_loop_b3
+	ADDQ $0x20, SI
+
+	// Initialize cc, current col
+	XORQ DI, DI
+
+col_loop_b2:
+	// Initialize (rr * ncols + cc) / 8, here ncols=128
+	MOVQ $0x00002000, R8
+	ADDQ DI, R8
+	SHRQ $0x03, R8
+
+	// Construct one XMM with first byte of first 16 rows
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x00, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x01, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x02, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x03, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x04, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x05, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x06, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x07, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x08, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x09, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0a, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0b, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0c, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0d, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0e, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0f, DX, X0
+
+	// Add ncols / 8
+	ADDQ $0x10, R8
+
+	// Construct another XMM with first byte of second 16 rows
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x00, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x01, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x02, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x03, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x04, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x05, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x06, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x07, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x08, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x09, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0a, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0b, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0c, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0d, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0e, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0f, DX, X1
+
+	// Add ncols / 8
+	ADDQ        $0x10, R8
+	VINSERTI128 $0x01, X1, Y0, Y0
+
+	// Initialize ((cc + 7) * nrows + rr) / 8, here nrows = 128
+	MOVQ DI, R8
+	ADDQ $0x07, R8
+	SHLQ $0x04, R8
+	ADDQ $0x04, R8
+
+	// Get the most significant bit of each 8-bit element in the YMM, and store the returned 4 bytes
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ $0x10, R8
+
+	// Compare cc with ncols, here ncols=128
+	ADDQ $0x08, DI
+	CMPQ DI, $0x80
+	JL   col_loop_b2
+	ADDQ $0x20, SI
+
+	// Initialize cc, current col
+	XORQ DI, DI
+
+col_loop_b1:
+	// Initialize (rr * ncols + cc) / 8, here ncols=128
+	MOVQ $0x00001000, R8
+	ADDQ DI, R8
+	SHRQ $0x03, R8
+
+	// Construct one XMM with first byte of first 16 rows
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x00, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x01, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x02, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x03, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x04, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x05, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x06, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x07, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x08, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x09, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0a, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0b, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0c, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0d, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0e, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0f, DX, X0
+
+	// Add ncols / 8
+	ADDQ $0x10, R8
+
+	// Construct another XMM with first byte of second 16 rows
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x00, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x01, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x02, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x03, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x04, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x05, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x06, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x07, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x08, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x09, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0a, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0b, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0c, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0d, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0e, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0f, DX, X1
+
+	// Add ncols / 8
+	ADDQ        $0x10, R8
+	VINSERTI128 $0x01, X1, Y0, Y0
+
+	// Initialize ((cc + 7) * nrows + rr) / 8, here nrows = 128
+	MOVQ DI, R8
+	ADDQ $0x07, R8
+	SHLQ $0x04, R8
+	ADDQ $0x08, R8
+
+	// Get the most significant bit of each 8-bit element in the YMM, and store the returned 4 bytes
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ $0x10, R8
+
+	// Compare cc with ncols, here ncols=128
+	ADDQ $0x08, DI
+	CMPQ DI, $0x80
+	JL   col_loop_b1
+	ADDQ $0x20, SI
+
+	// Initialize cc, current col
+	XORQ DI, DI
+
+col_loop_b0:
+	// Initialize (rr * ncols + cc) / 8, here ncols=128
+	MOVQ DI, R8
+	SHRQ $0x03, R8
+
+	// Construct one XMM with first byte of first 16 rows
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x00, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x01, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x02, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x03, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x04, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x05, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x06, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x07, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x08, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x09, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0a, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0b, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0c, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0d, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0e, DX, X0
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0f, DX, X0
+
+	// Add ncols / 8
+	ADDQ $0x10, R8
+
+	// Construct another XMM with first byte of second 16 rows
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x00, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x01, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x02, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x03, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x04, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x05, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x06, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x07, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x08, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x09, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0a, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0b, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0c, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0d, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0e, DX, X1
+
+	// Add ncols / 8
+	ADDQ   $0x10, R8
+	MOVB   (AX)(R8*1), DL
+	PINSRB $0x0f, DX, X1
+
+	// Add ncols / 8
+	ADDQ        $0x10, R8
+	VINSERTI128 $0x01, X1, Y0, Y0
+
+	// Initialize ((cc + 7) * nrows + rr) / 8, here nrows = 128
+	MOVQ DI, R8
+	ADDQ $0x07, R8
+	SHLQ $0x04, R8
+	ADDQ $0x0c, R8
+
+	// Get the most significant bit of each 8-bit element in the YMM, and store the returned 4 bytes
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ      $0x10, R8
+	VPMOVMSKB Y0, BX
+	MOVL      BX, (CX)(R8*1)
+	VPSLLQ    $0x01, Y0, Y0
+
+	// Sub nrows / 8
+	SUBQ $0x10, R8
+
+	// Compare cc with ncols, here ncols=128
+	ADDQ $0x08, DI
+	CMPQ DI, $0x80
+	JL   col_loop_b0
+	RET
+
 // func xor32x128(x *byte, y *byte, out *byte)
 // Requires: SSE2
 TEXT ·xor32x128(SB), NOSPLIT, $0-24

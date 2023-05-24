@@ -49,8 +49,8 @@ func TestBS128TransposeRev(t *testing.T) {
 		copy(in[i*16:], key)
 	}
 
-	transpose128(&in[0], &out[0])
-	transpose128(&out[0], &ret[0])
+	transpose128avx(&in[0], &out[0])
+	transpose128avx(&out[0], &ret[0])
 	if !bytes.Equal(in, ret) {
 		t.Fatalf("not expected %v", ret)
 	}
@@ -67,7 +67,7 @@ func BenchmarkBS128Transpose(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		transpose128(&input[0], &out[0])
+		transpose128avx(&input[0], &out[0])
 	}
 }
 
@@ -82,6 +82,6 @@ func BenchmarkBS128TransposeRev(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		transpose128Rev(&input[0], &out[0])
+		transpose128RevAvx(&input[0], &out[0])
 	}
 }

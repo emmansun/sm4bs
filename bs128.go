@@ -41,7 +41,7 @@ func (bs bs128) EncryptBlocks(xk []uint32, dst, src []byte) {
 	_ = dst[size-1] // early bounds check
 
 	state := make([]byte, size)
-	transpose128(&src[0], &state[0])
+	transpose128avx(&src[0], &state[0])
 	b0 := state[:32*bitSize]
 	b1 := state[32*bitSize : 64*bitSize]
 	b2 := state[64*bitSize : 96*bitSize]
@@ -56,5 +56,5 @@ func (bs bs128) EncryptBlocks(xk []uint32, dst, src []byte) {
 		b2 = bs.xor32(b2, bs.l(bs.tao(bs.xorRK(xk[i*4+2], rk, b3, b0, b1), buffer), buffer))
 		b3 = bs.xor32(b3, bs.l(bs.tao(bs.xorRK(xk[i*4+3], rk, b0, b1, b2), buffer), buffer))
 	}
-	transpose128Rev(&state[0], &dst[0])
+	transpose128RevAvx(&state[0], &dst[0])
 }
