@@ -40,5 +40,8 @@ func BenchmarkAESNIEncryptBlocks(b *testing.B) {
     BenchmarkAESNIEncryptBlocks-6   	  561253	      2076 ns/op	 493.20 MB/s	       0 B/op	       0 allocs/op
 ```
 
+最后优化性能：
+- 128组：https://github.com/emmansun/sm4bs/issues/1
+
 Reference:
 - https://github.com/emmansun/gmsm/discussions/116
