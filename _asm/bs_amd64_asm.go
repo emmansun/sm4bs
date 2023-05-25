@@ -6,7 +6,7 @@ import (
 	. "github.com/mmcloughlin/avo/reg"
 )
 
-//go:generate go run . -out ../transpose128_amd64.s -stubs ../transpose128_amd64.go -pkg sm4bs
+//go:generate go run . -out ../bs_amd64.s -stubs ../bs_amd64.go -pkg sm4bs
 
 func transpose64() {
 	// transpose64 function
