@@ -49,14 +49,31 @@ func TestBS128TransposeRev(t *testing.T) {
 		copy(in[i*16:], key)
 	}
 
-	transpose128avx(&in[0], &out[0])
-	transpose128avx(&out[0], &ret[0])
+	transpose128(&in[0], &out[0])
+	transpose128(&out[0], &ret[0])
 	if !bytes.Equal(in, ret) {
-		t.Fatalf("not expected %v", ret)
+		t.Fatalf("not expected %x, out %x", ret, out)
 	}
 }
 
-func BenchmarkBS128Transpose(b *testing.B) {
+func TestBS128TransposeRevAvx(t *testing.T) {
+	in := make([]byte, 128*16)
+	ret := make([]byte, 128*16)
+	out := make([]byte, 128*16)
+
+	key := []byte{0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10}
+	for i := 0; i < 128; i++ {
+		copy(in[i*16:], key)
+	}
+
+	transpose128avx(&in[0], &out[0])
+	transpose128avx(&out[0], &ret[0])
+	if !bytes.Equal(in, ret) {
+		t.Fatalf("not expected %x, out %x", ret, out)
+	}
+}
+
+func BenchmarkBS128TransposeAvx(b *testing.B) {
 	key := []byte{0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10}
 	input := make([]byte, 128*16)
 	for i := 0; i < 128; i++ {
@@ -71,7 +88,7 @@ func BenchmarkBS128Transpose(b *testing.B) {
 	}
 }
 
-func BenchmarkBS128TransposeRev(b *testing.B) {
+func BenchmarkBS128TransposeRevAvx(b *testing.B) {
 	key := []byte{0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10}
 	input := make([]byte, 128*16)
 	for i := 0; i < 128; i++ {
