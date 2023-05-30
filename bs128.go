@@ -20,7 +20,7 @@ func (bs bs128) tao(x, buffer []byte) []byte {
 }
 
 func (bs bs128) xor32(x1, x2 []byte) []byte {
-	xor32x128avx(&x1[0], &x2[0], &x1[0])
+	xor32x128avx(32*bs.bytes(), &x1[0], &x2[0], &x1[0])
 	return x1
 }
 

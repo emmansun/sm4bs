@@ -22,11 +22,20 @@ func transpose128avx(in *byte, out *byte)
 // Bit level matrix transpose, b0-b1-b2-b3, 128x128
 func transpose128RevAvx(in *byte, out *byte)
 
+// Bit level matrix transpose, 256x128 => 128x256
+func transpose256avx(in *byte, out *byte)
+
+// Bit level matrix transpose, 128x256 => 256x128, just for test here.
+func transpose128x256avx2(in *byte, out *byte)
+
+// Bit level matrix transpose, b0-b1-b2-b3, 128x256
+func transpose256RevAvx(in *byte, out *byte)
+
 // out = x xor y
 func xor32x128(x *byte, y *byte, out *byte)
 
 // out = x xor y
-func xor32x128avx(x *byte, y *byte, out *byte)
+func xor32x128avx(len int, x *byte, y *byte, out *byte)
 
 // xor x1, x2, x3 with round key, 16 bytes per bit
 func xorRoundKey128(rk uint32, x1 *byte, x2 *byte, x3 *byte, out *byte)
@@ -36,3 +45,12 @@ func sbox128(x *byte, buffer *byte)
 
 // l128, 128 bits per 'byte'
 func l128(x *byte, buffer *byte)
+
+// l256, 256 bits per 'byte'
+func l256(x *byte, buffer *byte)
+
+// sbox256avx2, 256 bits per 'byte'
+func sbox256avx2(x *byte, buffer *byte)
+
+// xor x1, x2, x3 with round key, 32 bytes per bit
+func xorRoundKey256avx2(rk uint32, x1 *byte, x2 *byte, x3 *byte, out *byte)
