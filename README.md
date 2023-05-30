@@ -14,6 +14,8 @@ BenchmarkXorRK-6   	37912296	        31.48 ns/op
 BenchmarkL128-6   	56766843	        20.75 ns/op	       0 B/op	       0 allocs/op
 BenchmarkSbox128-6   	68027982	        17.27 ns/op	       0 B/op	       0 allocs/op
 BenchmarkTao128-6   	14089119	        86.37 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBS128TransposeAvx-6   	 2279635	       511.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBS128TransposeRevAvx-6   	 2365981	       511.2 ns/op	       0 B/op	       0 allocs/op
 BenchmarkEncrypt128Blocks-6   	  170002	      6755 ns/op	 303.18 MB/s	    3072 B/op	       2 allocs/op
 ```
 **256组**：
