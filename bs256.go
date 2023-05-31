@@ -51,10 +51,10 @@ func (bs bs256) EncryptBlocks(xk []uint32, dst, src []byte) {
 	rk := buffer[:32*bitSize]
 	buffer = buffer[32*bitSize:]
 	for i := 0; i < 8; i++ {
-		b0 = bs.xor32(b0, bs.l(bs.tao(bs.xorRK(xk[i*4], rk, b1, b2, b3), buffer), buffer))
-		b1 = bs.xor32(b1, bs.l(bs.tao(bs.xorRK(xk[i*4+1], rk, b2, b3, b0), buffer), buffer))
-		b2 = bs.xor32(b2, bs.l(bs.tao(bs.xorRK(xk[i*4+2], rk, b3, b0, b1), buffer), buffer))
-		b3 = bs.xor32(b3, bs.l(bs.tao(bs.xorRK(xk[i*4+3], rk, b0, b1, b2), buffer), buffer))
+		b0 = bs.l(bs.tao(bs.xorRK(xk[i*4], rk, b1, b2, b3), buffer), b0)
+		b1 = bs.l(bs.tao(bs.xorRK(xk[i*4+1], rk, b2, b3, b0), buffer), b1)
+		b2 = bs.l(bs.tao(bs.xorRK(xk[i*4+2], rk, b3, b0, b1), buffer), b2)
+		b3 = bs.l(bs.tao(bs.xorRK(xk[i*4+3], rk, b0, b1, b2), buffer), b3)
 	}
 	transpose256RevAvx(&state[0], &dst[0])
 }

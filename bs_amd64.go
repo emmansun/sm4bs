@@ -43,10 +43,10 @@ func xorRoundKey128(rk uint32, x1 *byte, x2 *byte, x3 *byte, out *byte)
 // sbox128, 128 bits per 'byte'
 func sbox128(x *byte, buffer *byte)
 
-// l128, 128 bits per 'byte'
+// l128 and xor buffer, 128 bits per 'byte'
 func l128(x *byte, buffer *byte)
 
-// l256, 256 bits per 'byte'
+// l256 and xor buffer, 256 bits per 'byte'
 func l256(x *byte, buffer *byte)
 
 // sbox256avx2, 256 bits per 'byte'
