@@ -3,6 +3,21 @@
 
 目前性能如下：
 
+**64组**：
+```
+goos: windows
+goarch: amd64
+pkg: github.com/emmansun/sm4bs
+cpu: Intel(R) Core(TM) i5-9500 CPU @ 3.00GHz
+BenchmarkXorRK64-6   	38663529	        29.36 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSbox64-6   	67601062	        17.83 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTao64-6   	14010654	        82.90 ns/op	       0 B/op	       0 allocs/op
+BenchmarkL64-6   	54585649	        22.99 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBS64TransposeAvx-6   	 4376485	       274.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBS64TransposeRevAvx-6   	 4492495	       267.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkEncrypt64Blocks-6   	  218025	      5303 ns/op	 193.10 MB/s	    1536 B/op	       2 allocs/op
+```
+
 **128组**：
 ```
 goos: windows
@@ -39,6 +54,7 @@ BenchmarkEncrypt256Blocks-6   	  145350	      8104 ns/op	 505.45 MB/s	    6144 B
 goos: windows
 goarch: amd64
 cpu: Intel(R) Core(TM) i5-9500 CPU @ 3.00GHz
+BenchmarkAESNIEncrypt64Blocks-6   	  469024	      2254 ns/op	 454.21 MB/s	       0 B/op	       0 allocs/op
 BenchmarkAESNIEncrypt128Blocks-6   	  297854	      3972 ns/op	 515.63 MB/s	       0 B/op	       0 allocs/op
 BenchmarkAESNIEncrypt256Blocks-6   	  147344	      8047 ns/op	 508.99 MB/s	       0 B/op	       0 allocs/op
 ```

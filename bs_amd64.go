@@ -5,16 +5,13 @@
 package sm4bs
 
 // Bit level matrix transpose, 64x128
-func transpose64(in *byte, out *byte)
+func transpose64avx(in *byte, out *byte)
 
-// Bit level matrix transpose, 128x64
+// Bit level matrix transpose, b0-b1-b2-b3, 128x64
+func transpose64RevAvx(in *byte, out *byte)
+
+// Bit level matrix transpose, just for test, 128x64
 func transpose64Rev(in *byte, out *byte)
-
-// Bit level matrix transpose, 128x128
-func transpose128(in *byte, out *byte)
-
-// Bit level matrix transpose, b0-b1-b2-b3, 128x128
-func transpose128Rev(in *byte, out *byte)
 
 // Bit level matrix transpose, 128x128
 func transpose128avx(in *byte, out *byte)
@@ -54,3 +51,12 @@ func sbox256avx2(x *byte, buffer *byte)
 
 // xor x1, x2, x3 with round key, 32 bytes per bit
 func xorRoundKey256avx2(rk uint32, x1 *byte, x2 *byte, x3 *byte, out *byte)
+
+// sbox64, 64 bits per 'byte'
+func sbox64(x *byte, buffer *byte)
+
+// l64 and xor buffer, 64 bits per 'byte'
+func l64(x *byte, buffer *byte)
+
+// xor x1, x2, x3 with round key, 16 bytes per bit
+func xorRoundKey64(rk uint32, x1 *byte, x2 *byte, x3 *byte, out *byte)
