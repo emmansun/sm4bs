@@ -19,13 +19,13 @@ func (bs bs256) l(x, buffer []byte) []byte {
 }
 
 func (bs bs256) tao(x, buffer []byte) []byte {
-	const total = 4 * BS128_BYTEBYTES
+	const total = 4 * BS256_BYTEBYTES
 	_ = x[total-1]
 	_ = buffer[0]
 	sbox256avx2(&x[0], &buffer[0])
-	sbox256avx2(&x[BS128_BYTEBYTES], &buffer[0])
-	sbox256avx2(&x[2*BS128_BYTEBYTES], &buffer[0])
-	sbox256avx2(&x[3*BS128_BYTEBYTES], &buffer[0])
+	sbox256avx2(&x[BS256_BYTEBYTES], &buffer[0])
+	sbox256avx2(&x[2*BS256_BYTEBYTES], &buffer[0])
+	sbox256avx2(&x[3*BS256_BYTEBYTES], &buffer[0])
 	return x
 }
 
