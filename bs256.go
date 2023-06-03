@@ -2,12 +2,15 @@
 
 package sm4bs
 
+const BS256_BITBYTES = 32
+const BS256_BYTEBYTES = 8 * 32
+
 var BS256 bs256
 
 type bs256 struct{}
 
 func (bs256) bytes() int {
-	return 32
+	return BS256_BITBYTES
 }
 
 func (bs bs256) l(x, buffer []byte) []byte {
@@ -16,11 +19,13 @@ func (bs bs256) l(x, buffer []byte) []byte {
 }
 
 func (bs bs256) tao(x, buffer []byte) []byte {
-	size := 8 * bs.bytes()
-	for i := 0; i < 4; i++ {
-		bytes := x[i*size : (i+1)*size]
-		sbox256avx2(&bytes[0], &buffer[0])
-	}
+	const total = 4 * BS128_BYTEBYTES
+	_ = x[total-1]
+	_ = buffer[0]
+	sbox256avx2(&x[0], &buffer[0])
+	sbox256avx2(&x[BS128_BYTEBYTES], &buffer[0])
+	sbox256avx2(&x[2*BS128_BYTEBYTES], &buffer[0])
+	sbox256avx2(&x[3*BS128_BYTEBYTES], &buffer[0])
 	return x
 }
 
@@ -51,10 +56,37 @@ func (bs bs256) EncryptBlocks(xk []uint32, dst, src []byte) {
 	rk := buffer[:32*bitSize]
 	buffer = buffer[32*bitSize:]
 	for i := 0; i < 8; i++ {
-		b0 = bs.l(bs.tao(bs.xorRK(xk[i*4], rk, b1, b2, b3), buffer), b0)
-		b1 = bs.l(bs.tao(bs.xorRK(xk[i*4+1], rk, b2, b3, b0), buffer), b1)
-		b2 = bs.l(bs.tao(bs.xorRK(xk[i*4+2], rk, b3, b0, b1), buffer), b2)
-		b3 = bs.l(bs.tao(bs.xorRK(xk[i*4+3], rk, b0, b1, b2), buffer), b3)
+		_ = xk[3]
+
+		xorRoundKey256avx2(xk[0], &b1[0], &b2[0], &b3[0], &rk[0])
+		sbox256avx2(&rk[0], &buffer[0])
+		sbox256avx2(&rk[BS256_BYTEBYTES], &buffer[0])
+		sbox256avx2(&rk[2*BS256_BYTEBYTES], &buffer[0])
+		sbox256avx2(&rk[3*BS256_BYTEBYTES], &buffer[0])
+		l256(&rk[0], &b0[0])
+
+		xorRoundKey256avx2(xk[1], &b2[0], &b3[0], &b0[0], &rk[0])
+		sbox256avx2(&rk[0], &buffer[0])
+		sbox256avx2(&rk[BS256_BYTEBYTES], &buffer[0])
+		sbox256avx2(&rk[2*BS256_BYTEBYTES], &buffer[0])
+		sbox256avx2(&rk[3*BS256_BYTEBYTES], &buffer[0])
+		l256(&rk[0], &b1[0])
+
+		xorRoundKey256avx2(xk[2], &b3[0], &b0[0], &b1[0], &rk[0])
+		sbox256avx2(&rk[0], &buffer[0])
+		sbox256avx2(&rk[BS256_BYTEBYTES], &buffer[0])
+		sbox256avx2(&rk[2*BS256_BYTEBYTES], &buffer[0])
+		sbox256avx2(&rk[3*BS256_BYTEBYTES], &buffer[0])
+		l256(&rk[0], &b2[0])
+
+		xorRoundKey256avx2(xk[3], &b0[0], &b1[0], &b2[0], &rk[0])
+		sbox256avx2(&rk[0], &buffer[0])
+		sbox256avx2(&rk[BS256_BYTEBYTES], &buffer[0])
+		sbox256avx2(&rk[2*BS256_BYTEBYTES], &buffer[0])
+		sbox256avx2(&rk[3*BS256_BYTEBYTES], &buffer[0])
+		l256(&rk[0], &b3[0])
+
+		xk = xk[4:]
 	}
 	transpose256RevAvx(&state[0], &dst[0])
 }

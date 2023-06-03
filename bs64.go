@@ -1,19 +1,24 @@
 package sm4bs
 
+const BS64_BITBYTES = 8
+const BS64_BYTEBYTES = 8 * 8
+
 var BS64 bs64
 
 type bs64 struct{}
 
 func (bs64) bytes() int {
-	return 8
+	return BS64_BITBYTES
 }
 
 func (bs bs64) tao(x, buffer []byte) []byte {
-	size := 8 * bs.bytes()
-	for i := 0; i < 4; i++ {
-		bytes := x[i*size : (i+1)*size]
-		sbox64(&bytes[0], &buffer[0])
-	}
+	const total = 4 * BS64_BYTEBYTES
+	_ = x[total-1]
+	_ = buffer[0]
+	sbox64(&x[0], &buffer[0])
+	sbox64(&x[BS64_BYTEBYTES], &buffer[0])
+	sbox64(&x[2*BS64_BYTEBYTES], &buffer[0])
+	sbox64(&x[3*BS64_BYTEBYTES], &buffer[0])
 	return x
 }
 
@@ -44,10 +49,37 @@ func (bs bs64) EncryptBlocks(xk []uint32, dst, src []byte) {
 	rk := buffer[:32*bitSize]
 	buffer = buffer[32*bitSize:]
 	for i := 0; i < 8; i++ {
-		b0 = bs.l(bs.tao(bs.xorRK(xk[i*4], rk, b1, b2, b3), buffer), b0)
-		b1 = bs.l(bs.tao(bs.xorRK(xk[i*4+1], rk, b2, b3, b0), buffer), b1)
-		b2 = bs.l(bs.tao(bs.xorRK(xk[i*4+2], rk, b3, b0, b1), buffer), b2)
-		b3 = bs.l(bs.tao(bs.xorRK(xk[i*4+3], rk, b0, b1, b2), buffer), b3)
+		_ = xk[3]
+
+		xorRoundKey64(xk[0], &b1[0], &b2[0], &b3[0], &rk[0])
+		sbox64(&rk[0], &buffer[0])
+		sbox64(&rk[BS64_BYTEBYTES], &buffer[0])
+		sbox64(&rk[2*BS64_BYTEBYTES], &buffer[0])
+		sbox64(&rk[3*BS64_BYTEBYTES], &buffer[0])
+		l64(&rk[0], &b0[0])
+
+		xorRoundKey64(xk[1], &b2[0], &b3[0], &b0[0], &rk[0])
+		sbox64(&rk[0], &buffer[0])
+		sbox64(&rk[BS64_BYTEBYTES], &buffer[0])
+		sbox64(&rk[2*BS64_BYTEBYTES], &buffer[0])
+		sbox64(&rk[3*BS64_BYTEBYTES], &buffer[0])
+		l64(&rk[0], &b1[0])
+
+		xorRoundKey64(xk[2], &b3[0], &b0[0], &b1[0], &rk[0])
+		sbox64(&rk[0], &buffer[0])
+		sbox64(&rk[BS64_BYTEBYTES], &buffer[0])
+		sbox64(&rk[2*BS64_BYTEBYTES], &buffer[0])
+		sbox64(&rk[3*BS64_BYTEBYTES], &buffer[0])
+		l64(&rk[0], &b2[0])
+
+		xorRoundKey64(xk[3], &b0[0], &b1[0], &b2[0], &rk[0])
+		sbox64(&rk[0], &buffer[0])
+		sbox64(&rk[BS64_BYTEBYTES], &buffer[0])
+		sbox64(&rk[2*BS64_BYTEBYTES], &buffer[0])
+		sbox64(&rk[3*BS64_BYTEBYTES], &buffer[0])
+		l64(&rk[0], &b3[0])
+
+		xk = xk[4:]
 	}
 	transpose64RevAvx(&state[0], &dst[0])
 }
