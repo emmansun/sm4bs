@@ -123,16 +123,32 @@ func BenchmarkL128(b *testing.B) {
 	}
 }
 
-func BenchmarkXorRK(b *testing.B) {
+func TestXorRK128(t *testing.T) {
+	b0 := newUint32x128(0xe0e7eef5)
+	b1 := newUint32x128(0xc0c7ced5)
+	b2 := newUint32x128(0xa0a7aeb5)
+	rk := make([]byte, 32*BS128.bytes())
+	k := uint32(0xa3b1bac6)
+	BS128.xorRK(k, rk, b0, b1, b2)
+	expected := newUint32x128(k ^ 0xe0e7eef5 ^ 0xc0c7ced5 ^ 0xa0a7aeb5)
+	if !bytes.Equal(expected, rk) {
+		t.Fatalf("unexpected xorRK result %x, %x", rk, expected)
+	}
+}
+
+func BenchmarkXorRK128(b *testing.B) {
 	b0 := make([]byte, 32*BS128.bytes())
 	b1 := make([]byte, 32*BS128.bytes())
 	b2 := make([]byte, 32*BS128.bytes())
 	rk := make([]byte, 32*BS128.bytes())
 	k := uint32(0xa3b1bac6)
+	b.ReportAllocs()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		BS128.xorRK(k, rk, b0, b1, b2)
 	}
 }
+
 
 func BenchmarkXor32(b *testing.B) {
 	b0 := make([]byte, 32*BS128.bytes())

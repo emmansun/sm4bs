@@ -6344,87 +6344,86 @@ xor32_loop_avx:
 	RET
 
 // func xorRoundKey128(rk uint32, x1 *byte, x2 *byte, x3 *byte, out *byte)
-// Requires: SSE2
+// Requires: AVX, AVX2, SSE2
 TEXT ·xorRoundKey128(SB), NOSPLIT, $0-40
-	MOVL    rk+0(FP), AX
-	MOVQ    x1+8(FP), CX
-	MOVQ    x2+16(FP), DX
-	MOVQ    x3+24(FP), BX
-	MOVQ    out+32(FP), SI
-	PCMPEQB X1, X1
-	XORQ    R8, R8
+	MOVL rk+0(FP), AX
+	MOVQ x1+8(FP), CX
+	MOVQ x2+16(FP), DX
+	MOVQ x3+24(FP), BX
+	MOVQ out+32(FP), SI
+	XORQ DI, DI
+	MOVQ AX, X1
 
 	// Handle first byte
-	MOVL $0x01000000, DI
+	MOVL    $0x01000000, AX
+	MOVQ    AX, X0
+	VMOVDQU X0, X2
 
 rk_loop_1:
-	MOVOU (CX)(R8*1), X0
-	PXOR  (DX)(R8*1), X0
-	PXOR  (BX)(R8*1), X0
-	TESTL AX, DI
-	JZ    rk_loop_1_c
-	PXOR  X1, X0
-
-rk_loop_1_c:
-	MOVOU X0, (SI)(R8*1)
-	ROLL  $0x01, DI
-	ADDQ  $0x10, R8
-	CMPQ  R8, $0x00000080
-	JL    rk_loop_1
+	VMOVDQU      (CX)(DI*1), X4
+	VPXOR        (DX)(DI*1), X4, X4
+	VPXOR        (BX)(DI*1), X4, X4
+	VPAND        X0, X1, X3
+	VPCMPEQD     X0, X3, X3
+	VPBROADCASTD X3, X3
+	VPXOR        X3, X4, X4
+	VMOVDQU      X4, (SI)(DI*1)
+	VPSLLD       $0x01, X0, X0
+	ADDQ         $0x10, DI
+	CMPQ         DI, $0x00000080
+	JL           rk_loop_1
 
 	// Handle second byte
-	MOVL $0x00010000, DI
+	VPSRLD $0x08, X2, X0
 
 rk_loop_2:
-	MOVOU (CX)(R8*1), X0
-	PXOR  (DX)(R8*1), X0
-	PXOR  (BX)(R8*1), X0
-	TESTL AX, DI
-	JZ    rk_loop_2_c
-	PXOR  X1, X0
-
-rk_loop_2_c:
-	MOVOU X0, (SI)(R8*1)
-	ROLL  $0x01, DI
-	ADDQ  $0x10, R8
-	CMPQ  R8, $0x00000100
-	JL    rk_loop_2
+	VMOVDQU      (CX)(DI*1), X4
+	VPXOR        (DX)(DI*1), X4, X4
+	VPXOR        (BX)(DI*1), X4, X4
+	VPAND        X0, X1, X3
+	VPCMPEQD     X0, X3, X3
+	VPBROADCASTD X3, X3
+	VPXOR        X3, X4, X4
+	VMOVDQU      X4, (SI)(DI*1)
+	VPSLLD       $0x01, X0, X0
+	ADDQ         $0x10, DI
+	CMPQ         DI, $0x00000100
+	JL           rk_loop_2
 
 	// Handle third byte
-	MOVL $0x00000100, DI
+	VPSRLD $0x10, X2, X0
 
 rk_loop_3:
-	MOVOU (CX)(R8*1), X0
-	PXOR  (DX)(R8*1), X0
-	PXOR  (BX)(R8*1), X0
-	TESTL AX, DI
-	JZ    rk_loop_3_c
-	PXOR  X1, X0
-
-rk_loop_3_c:
-	MOVOU X0, (SI)(R8*1)
-	ROLL  $0x01, DI
-	ADDQ  $0x10, R8
-	CMPQ  R8, $0x00000180
-	JL    rk_loop_3
+	VMOVDQU      (CX)(DI*1), X4
+	VPXOR        (DX)(DI*1), X4, X4
+	VPXOR        (BX)(DI*1), X4, X4
+	VPAND        X0, X1, X3
+	VPCMPEQD     X0, X3, X3
+	VPBROADCASTD X3, X3
+	VPXOR        X3, X4, X4
+	VMOVDQU      X4, (SI)(DI*1)
+	VPSLLD       $0x01, X0, X0
+	ADDQ         $0x10, DI
+	CMPQ         DI, $0x00000180
+	JL           rk_loop_3
 
 	// Handle last byte
-	MOVL $0x00000001, DI
+	VPSRLD $0x18, X2, X0
 
 rk_loop_4:
-	MOVOU (CX)(R8*1), X0
-	PXOR  (DX)(R8*1), X0
-	PXOR  (BX)(R8*1), X0
-	TESTL AX, DI
-	JZ    rk_loop_4_c
-	PXOR  X1, X0
-
-rk_loop_4_c:
-	MOVOU X0, (SI)(R8*1)
-	ROLL  $0x01, DI
-	ADDQ  $0x10, R8
-	CMPQ  R8, $0x00000200
-	JL    rk_loop_4
+	VMOVDQU      (CX)(DI*1), X4
+	VPXOR        (DX)(DI*1), X4, X4
+	VPXOR        (BX)(DI*1), X4, X4
+	VPAND        X0, X1, X3
+	VPCMPEQD     X0, X3, X3
+	VPBROADCASTD X3, X3
+	VPXOR        X3, X4, X4
+	VMOVDQU      X4, (SI)(DI*1)
+	VPSLLD       $0x01, X0, X0
+	ADDQ         $0x10, DI
+	CMPQ         DI, $0x00000200
+	JL           rk_loop_4
+	VZEROUPPER
 	RET
 
 // func sbox128(x *byte, buffer *byte)
@@ -7996,87 +7995,86 @@ TEXT ·sbox256avx2(SB), NOSPLIT, $0-16
 	RET
 
 // func xorRoundKey256avx2(rk uint32, x1 *byte, x2 *byte, x3 *byte, out *byte)
-// Requires: AVX, AVX2
+// Requires: AVX, AVX2, SSE2
 TEXT ·xorRoundKey256avx2(SB), NOSPLIT, $0-40
-	MOVL     rk+0(FP), AX
-	MOVQ     x1+8(FP), CX
-	MOVQ     x2+16(FP), DX
-	MOVQ     x3+24(FP), BX
-	MOVQ     out+32(FP), SI
-	VPCMPEQB Y1, Y1, Y1
-	XORQ     R8, R8
+	MOVL rk+0(FP), AX
+	MOVQ x1+8(FP), CX
+	MOVQ x2+16(FP), DX
+	MOVQ x3+24(FP), BX
+	MOVQ out+32(FP), SI
+	XORQ DI, DI
+	MOVQ AX, X1
 
 	// Handle first byte
-	MOVL $0x01000000, DI
+	MOVL    $0x01000000, AX
+	MOVQ    AX, X0
+	VMOVDQU X0, X2
 
 rk_loop_1:
-	VMOVDQU (CX)(R8*1), Y0
-	VPXOR   (DX)(R8*1), Y0, Y0
-	VPXOR   (BX)(R8*1), Y0, Y0
-	TESTL   AX, DI
-	JZ      rk_loop_1_c
-	VPXOR   Y1, Y0, Y0
-
-rk_loop_1_c:
-	VMOVDQU Y0, (SI)(R8*1)
-	ROLL    $0x01, DI
-	ADDQ    $0x20, R8
-	CMPQ    R8, $0x00000100
-	JL      rk_loop_1
+	VMOVDQU      (CX)(DI*1), Y4
+	VPXOR        (DX)(DI*1), Y4, Y4
+	VPXOR        (BX)(DI*1), Y4, Y4
+	VPAND        X0, X1, X3
+	VPCMPEQD     X0, X3, X3
+	VPBROADCASTD X3, Y3
+	VPXOR        Y3, Y4, Y4
+	VMOVDQU      Y4, (SI)(DI*1)
+	VPSLLD       $0x01, X0, X0
+	ADDQ         $0x20, DI
+	CMPQ         DI, $0x00000100
+	JL           rk_loop_1
 
 	// Handle second byte
-	MOVL $0x00010000, DI
+	VPSRLD $0x08, X2, X0
 
 rk_loop_2:
-	VMOVDQU (CX)(R8*1), Y0
-	VPXOR   (DX)(R8*1), Y0, Y0
-	VPXOR   (BX)(R8*1), Y0, Y0
-	TESTL   AX, DI
-	JZ      rk_loop_2_c
-	VPXOR   Y1, Y0, Y0
-
-rk_loop_2_c:
-	VMOVDQU Y0, (SI)(R8*1)
-	ROLL    $0x01, DI
-	ADDQ    $0x20, R8
-	CMPQ    R8, $0x00000200
-	JL      rk_loop_2
+	VMOVDQU      (CX)(DI*1), Y4
+	VPXOR        (DX)(DI*1), Y4, Y4
+	VPXOR        (BX)(DI*1), Y4, Y4
+	VPAND        X0, X1, X3
+	VPCMPEQD     X0, X3, X3
+	VPBROADCASTD X3, Y3
+	VPXOR        Y3, Y4, Y4
+	VMOVDQU      Y4, (SI)(DI*1)
+	VPSLLD       $0x01, X0, X0
+	ADDQ         $0x20, DI
+	CMPQ         DI, $0x00000200
+	JL           rk_loop_2
 
 	// Handle third byte
-	MOVL $0x00000100, DI
+	VPSRLD $0x10, X2, X0
 
 rk_loop_3:
-	VMOVDQU (CX)(R8*1), Y0
-	VPXOR   (DX)(R8*1), Y0, Y0
-	VPXOR   (BX)(R8*1), Y0, Y0
-	TESTL   AX, DI
-	JZ      rk_loop_3_c
-	VPXOR   Y1, Y0, Y0
-
-rk_loop_3_c:
-	VMOVDQU Y0, (SI)(R8*1)
-	ROLL    $0x01, DI
-	ADDQ    $0x20, R8
-	CMPQ    R8, $0x00000300
-	JL      rk_loop_3
+	VMOVDQU      (CX)(DI*1), Y4
+	VPXOR        (DX)(DI*1), Y4, Y4
+	VPXOR        (BX)(DI*1), Y4, Y4
+	VPAND        X0, X1, X3
+	VPCMPEQD     X0, X3, X3
+	VPBROADCASTD X3, Y3
+	VPXOR        Y3, Y4, Y4
+	VMOVDQU      Y4, (SI)(DI*1)
+	VPSLLD       $0x01, X0, X0
+	ADDQ         $0x20, DI
+	CMPQ         DI, $0x00000300
+	JL           rk_loop_3
 
 	// Handle last byte
-	MOVL $0x00000001, DI
+	VPSRLD $0x18, X2, X0
 
 rk_loop_4:
-	VMOVDQU (CX)(R8*1), Y0
-	VPXOR   (DX)(R8*1), Y0, Y0
-	VPXOR   (BX)(R8*1), Y0, Y0
-	TESTL   AX, DI
-	JZ      rk_loop_4_c
-	VPXOR   Y1, Y0, Y0
-
-rk_loop_4_c:
-	VMOVDQU Y0, (SI)(R8*1)
-	ROLL    $0x01, DI
-	ADDQ    $0x20, R8
-	CMPQ    R8, $0x00000400
-	JL      rk_loop_4
+	VMOVDQU      (CX)(DI*1), Y4
+	VPXOR        (DX)(DI*1), Y4, Y4
+	VPXOR        (BX)(DI*1), Y4, Y4
+	VPAND        X0, X1, X3
+	VPCMPEQD     X0, X3, X3
+	VPBROADCASTD X3, Y3
+	VPXOR        Y3, Y4, Y4
+	VMOVDQU      Y4, (SI)(DI*1)
+	VPSLLD       $0x01, X0, X0
+	ADDQ         $0x20, DI
+	CMPQ         DI, $0x00000400
+	JL           rk_loop_4
+	VZEROUPPER
 	RET
 
 // func sbox64(x *byte, buffer *byte)
@@ -8880,83 +8878,80 @@ TEXT ·l64(SB), NOSPLIT, $0-16
 	RET
 
 // func xorRoundKey64(rk uint32, x1 *byte, x2 *byte, x3 *byte, out *byte)
+// Requires: CMOV
 TEXT ·xorRoundKey64(SB), NOSPLIT, $0-40
 	MOVL rk+0(FP), AX
 	MOVQ x1+8(FP), CX
 	MOVQ x2+16(FP), DX
 	MOVQ x3+24(FP), BX
 	MOVQ out+32(FP), SI
-	XORQ R9, R9
+	XORQ R10, R10
 
 	// Handle first byte
-	MOVL $0x01000000, R8
+	MOVL $0x01000000, R9
 
-rk_loop_1:
-	MOVQ  (CX)(R9*1), DI
-	XORQ  (DX)(R9*1), DI
-	XORQ  (BX)(R9*1), DI
-	TESTL AX, R8
-	JZ    rk_loop_1_c
-	NOTQ  DI
-
-rk_loop_1_c:
-	MOVQ DI, (SI)(R9*1)
-	ROLL $0x01, R8
-	ADDQ $0x08, R9
-	CMPQ R9, $0x00000040
-	JL   rk_loop_1
+rk_b1:
+	MOVQ    (CX)(R10*1), DI
+	XORQ    (DX)(R10*1), DI
+	XORQ    (BX)(R10*1), DI
+	MOVQ    DI, R8
+	NOTQ    R8
+	TESTL   AX, R9
+	CMOVQEQ DI, R8
+	MOVQ    R8, (SI)(R10*1)
+	ROLL    $0x01, R9
+	ADDQ    $0x08, R10
+	CMPQ    R10, $0x00000040
+	JL      rk_b1
 
 	// Handle second byte
-	MOVL $0x00010000, R8
+	MOVL $0x00010000, R9
 
-rk_loop_2:
-	MOVQ  (CX)(R9*1), DI
-	XORQ  (DX)(R9*1), DI
-	XORQ  (BX)(R9*1), DI
-	TESTL AX, R8
-	JZ    rk_loop_2_c
-	NOTQ  DI
-
-rk_loop_2_c:
-	MOVQ DI, (SI)(R9*1)
-	ROLL $0x01, R8
-	ADDQ $0x08, R9
-	CMPQ R9, $0x00000080
-	JL   rk_loop_2
+rk_b2:
+	MOVQ    (CX)(R10*1), DI
+	XORQ    (DX)(R10*1), DI
+	XORQ    (BX)(R10*1), DI
+	MOVQ    DI, R8
+	NOTQ    R8
+	TESTL   AX, R9
+	CMOVQEQ DI, R8
+	MOVQ    R8, (SI)(R10*1)
+	ROLL    $0x01, R9
+	ADDQ    $0x08, R10
+	CMPQ    R10, $0x00000080
+	JL      rk_b2
 
 	// Handle third byte
-	MOVL $0x00000100, R8
+	MOVL $0x00000100, R9
 
-rk_loop_3:
-	MOVQ  (CX)(R9*1), DI
-	XORQ  (DX)(R9*1), DI
-	XORQ  (BX)(R9*1), DI
-	TESTL AX, R8
-	JZ    rk_loop_3_c
-	NOTQ  DI
-
-rk_loop_3_c:
-	MOVQ DI, (SI)(R9*1)
-	ROLL $0x01, R8
-	ADDQ $0x08, R9
-	CMPQ R9, $0x000000c0
-	JL   rk_loop_3
+rk_b3:
+	MOVQ    (CX)(R10*1), DI
+	XORQ    (DX)(R10*1), DI
+	XORQ    (BX)(R10*1), DI
+	MOVQ    DI, R8
+	NOTQ    R8
+	TESTL   AX, R9
+	CMOVQEQ DI, R8
+	MOVQ    R8, (SI)(R10*1)
+	ROLL    $0x01, R9
+	ADDQ    $0x08, R10
+	CMPQ    R10, $0x000000c0
+	JL      rk_b3
 
 	// Handle last byte
-	MOVL $0x00000001, R8
+	MOVL $0x00000001, R9
 
-rk_loop_4:
-	MOVQ  (CX)(R9*1), DI
-	XORQ  (DX)(R9*1), DI
-	XORQ  (BX)(R9*1), DI
-	TESTL AX, R8
-	JZ    rk_loop_4_c
-	NOTQ  DI
-
-rk_loop_4_c:
-	MOVQ DI, (SI)(R9*1)
-	ROLL $0x01, R8
-	ADDQ $0x08, R9
-	CMPQ R9, $0x00000100
-	JL   rk_loop_4
+rk_b4:
+	MOVQ    (CX)(R10*1), DI
+	XORQ    (DX)(R10*1), DI
+	XORQ    (BX)(R10*1), DI
+	MOVQ    DI, R8
+	NOTQ    R8
+	TESTL   AX, R9
+	CMOVQEQ DI, R8
+	MOVQ    R8, (SI)(R10*1)
+	ROLL    $0x01, R9
+	ADDQ    $0x08, R10
+	CMPQ    R10, $0x00000100
+	JL      rk_b4
 	RET
