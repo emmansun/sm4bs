@@ -8899,7 +8899,7 @@ rk_b1:
 	TESTL   AX, R9
 	CMOVQEQ DI, R8
 	MOVQ    R8, (SI)(R10*1)
-	ROLL    $0x01, R9
+	SHLL    $0x01, R9
 	ADDQ    $0x08, R10
 	CMPQ    R10, $0x00000040
 	JL      rk_b1
@@ -8916,7 +8916,7 @@ rk_b2:
 	TESTL   AX, R9
 	CMOVQEQ DI, R8
 	MOVQ    R8, (SI)(R10*1)
-	ROLL    $0x01, R9
+	SHLL    $0x01, R9
 	ADDQ    $0x08, R10
 	CMPQ    R10, $0x00000080
 	JL      rk_b2
@@ -8933,7 +8933,7 @@ rk_b3:
 	TESTL   AX, R9
 	CMOVQEQ DI, R8
 	MOVQ    R8, (SI)(R10*1)
-	ROLL    $0x01, R9
+	SHLL    $0x01, R9
 	ADDQ    $0x08, R10
 	CMPQ    R10, $0x000000c0
 	JL      rk_b3
@@ -8950,7 +8950,7 @@ rk_b4:
 	TESTL   AX, R9
 	CMOVQEQ DI, R8
 	MOVQ    R8, (SI)(R10*1)
-	ROLL    $0x01, R9
+	SHLL    $0x01, R9
 	ADDQ    $0x08, R10
 	CMPQ    R10, $0x00000100
 	JL      rk_b4
